@@ -281,7 +281,20 @@ public class JackMaloonAI implements CFPlayer{
 	}
 	
 	public int nextMove(CFGame g) {			//plays the next move with sound logic
+		
 		moveFinder m = new moveFinder(g);
+		boolean empty_board = true;
+		
+		for(int col=0; col<g.getNumCols(); col++) {		//checks to see if board is empty
+			for(int row=0; row<g.getNumRows(); row++) {
+				if(m.getState[col][row]!= 0) 
+					empty_board = false;
+			}
+		}
+		
+		if(empty_board) { 		//if board is empty, middle square is played
+			return(g.getNumCols()/2);
+		}
 		int[] touching_array = new int[g.getNumCols()];
 
 		for(int col=0; col<g.getNumCols(); col++) {		
