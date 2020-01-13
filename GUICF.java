@@ -6,14 +6,14 @@ import java.util.Random;
 import java.awt.event.*;
 
 public class GUICF extends CFGame{
-	
+		
 	private class ButtonListener extends CFGame implements ActionListener{
 		
 		private int column;
 		
 		public ButtonListener(int i) {		//looks for what button was clicked
 			
-			column = i+1;
+			column = i;
 		}
 		
 		public void actionPerformed(ActionEvent e){	 //plays the column associated with whatever button was clicked
@@ -43,6 +43,14 @@ public class GUICF extends CFGame{
 		}
 	}
 	
+	private class newGameButtonListener extends CFGame implements ActionListener{
+		
+		public void actionPerformed(ActionEvent e){		//plays a move in the ai vs. ai game after 'play' button is pressed
+			new GUICF(ai1);
+					
+		}
+	}
+	
 	private class CloseListener implements ActionListener{		//closes GUI terminal
 
 	    public void actionPerformed(ActionEvent e) {
@@ -57,7 +65,7 @@ public class GUICF extends CFGame{
 	private boolean moveWorked = true;
 	private boolean movePlayed;
 	private boolean firstTurn = false;
-	private int x[][];
+	private int x[][]; 
 	CFPlayer ai1;
 	CFPlayer ai2;
 	
@@ -65,6 +73,7 @@ public class GUICF extends CFGame{
 	JButton[] buttons;
 	JButton gameButton;
 	JButton gameOver;
+	JButton replay;
 	
 	public GUICF (CFPlayer ai) {		//sets up human vs. ai GUI game
 
@@ -75,10 +84,10 @@ public class GUICF extends CFGame{
 		
 		buttonPanel = new JPanel();
 		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
-		buttonPanel.setLayout(new GridLayout(1,7));
+		buttonPanel.setLayout(new GridLayout(1, getNumCols()));
 		buttons = new JButton[getNumCols()]; 		//sets up buttons for the user to use when playing
 	
-		for(int i = 0; i<getNumCols(); i++) {
+		for(int i=0; i<getNumCols(); i++) {
 			
 			buttons[i] = new JButton("\u2193");
 			buttons[i].addActionListener(new ButtonListener(i));		//gives buttons functionality when playing
@@ -109,24 +118,22 @@ public class GUICF extends CFGame{
 			ai1turn = true;
 	}
 	
-	private boolean playGUI (int c) {
-		
+	private boolean playGUI (int col) {
+		//System.out.println("column " + col);
 		x = getState();	
-		if(c < 1 || c > getNumCols() || x[c-1][getNumRows()-1] != 0) {		//if column is full, no move is played
+		if(col<0 || col>=getNumCols() || x[col][getNumRows()-1]!=0) 	//if column is full, no move is played
 			  return false;
-			  }
 		
 		movePlayed = false;
-		play(c);		//plays move so logic behind game is updated
-		for(int i = 0;i<getNumRows();i++) {		//paints square that is most recently played either red or black depending on who's turn it is
-			  if(x[c-1][i] == 0) {	
-				  
+		play(col);		//plays move so logic behind game is updated
+		for(int row=0; row<getNumRows(); row++) {		//paints square that is most recently played either red or black depending on who's turn it is
+			  if(x[col][row] == 0) {	
 				  if(!isRedTurn()) { 
-					  this_board.paint(c-1,i,1);
+					  this_board.paint(col,row,1);
 					  movePlayed = true;  
 				  }
 				  else if(isRedTurn() && !movePlayed) 
-					  this_board.paint(c-1,i,2);	
+					  this_board.paint(col,row,2);	
 				  
 				  if(isGameOver() && isWinner()) 			//checks if there is a winner			
 						winnerButton();						//calls the button that replaces game button(s) to display the winner and close the game
@@ -189,7 +196,7 @@ public class GUICF extends CFGame{
 		
 		int x[][] = this.getState();
 		
-		for(int i = 5;i>=0;i--) {
+		for(int i=5; i >= 0; i--) {
 			for(int j = 0;j<getNumCols();j++) {
 				System.out.print(x[j][i] + "  ");
 			}
@@ -210,10 +217,11 @@ public class GUICF extends CFGame{
 		
 		buttonPanel= new JPanel();			
 		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
-		buttonPanel.setLayout(new GridLayout(1,1));
+		buttonPanel.setLayout(new GridLayout(1,2));
 		winnerName();										//creates a button with winner's name on it
 		gameOver.addActionListener(new CloseListener());		//adds functionality to close window when 'game over' button is pressed
 		buttonPanel.add(gameOver);
+		buttonPanel.add(replayButton());
 	}
 	
 	void drawButton() {		//creates a button if the game is a draw to display this and close the window. Works similarly to 'winnerButton'
@@ -224,10 +232,11 @@ public class GUICF extends CFGame{
 		}
 		buttonPanel= new JPanel();
 		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
-		buttonPanel.setLayout(new GridLayout(1,1));
+		buttonPanel.setLayout(new GridLayout(1,2));
 		buttons[0] = new JButton("Game is Over! Draw");
 		buttons[0].addActionListener(new CloseListener());
 		buttonPanel.add(buttons[0]);
+		buttonPanel.add(replayButton());
 	}
 	
 	void winnerName() {		//makes a button to display who the winner is
@@ -248,4 +257,12 @@ public class GUICF extends CFGame{
 				gameOver = new JButton("Game is Over! " + ai2.getName() + " Wins. Click Here to Exit.");
 		}		
 	}	
+	
+	JButton replayButton() {		//makes a button to display who the winner is
+		
+		replay = new JButton("Click to play a new Game");
+		replay.addActionListener(new newGameButtonListener());
+		
+		return replay;
+	}
 }
