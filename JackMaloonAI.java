@@ -13,7 +13,10 @@ public class JackMaloonAI implements CFPlayer{
 		ArrayList<Integer> losing_moves = new ArrayList<>();		//losing move is considered move that will allow opponent to win on following turn
 		ArrayList<Integer> unwise_moves = new ArrayList<>();		//unwise move is considered move that will allow opponent to block AI's winning move on following turn
 		ArrayList<Integer> illegal_moves = new ArrayList<>();    //move that is illegal
+		ArrayList<Integer> AI_three_consecutive = new ArrayList<>();
+		ArrayList<Integer> opposing_three_consecutive = new ArrayList<>();
 		ArrayList<Integer> row_stopper = new ArrayList<>();
+		int[][] aaa = new int[7][6];
 
 		private int adjacent_touches = 0;
 		
@@ -21,6 +24,12 @@ public class JackMaloonAI implements CFPlayer{
 			
 			this.g = g;
 			getState = g.getState();
+			for(int i=0; i<g.getNumCols(); i++) {
+				  for(int j=0;j<g.getNumRows(); j++) {
+					  aaa[i][j] = 0;
+				  }
+				  
+			}
 		}
 		
 		public void boardPrint(CFGame g, int col, int row, int num) {		//prints board to user when called
@@ -80,56 +89,34 @@ public class JackMaloonAI implements CFPlayer{
 					    winningMove = true;
 				    else if(isMoveWinning() && ((row==1 && getState[column][row-1] == 0) ||(row>1 && getState[column][row-1] == 0 && getState[column][row-2] !=0))) {  //checks to see whether a move 2 moves from now can win, and avoids it
 				    	
-				    	if((getState[column][row]==1 && g.isRedTurn() || getState[column][row]==-1 && !g.isRedTurn())) {
-							  //System.out.println("unwise " + column);
+				    	if((getState[column][row]==1 && g.isRedTurn() || getState[column][row]==-1 && !g.isRedTurn())) 
 							  unwise_moves.add(column);
-						}
-						else if(((getState[column][row]==-1 && g.isRedTurn() || getState[column][row]==1 && !g.isRedTurn()))) {
-						 //System.out.println("losing " + column);
-	
-							losing_moves.add(column);
-						}
+						else if(((getState[column][row]==-1 && g.isRedTurn() || getState[column][row]==1 && !g.isRedTurn()))) 
+							losing_moves.add(column);						
 				    }
+				    
+				    if(!threeInARow(column, row).isEmpty() && ((row>0 && getState[column][row-1] != 0)||row==0)) {
+				    	if((getState[column][row]==1 && g.isRedTurn() || getState[column][row]==-1 && !g.isRedTurn())) { 
+				    		AI_three_consecutive.addAll(threeInARow(column, row));
+				    	}
+				    
+				    	else if(((getState[column][row]==-1 && g.isRedTurn() || getState[column][row]==1 && !g.isRedTurn()))) { 
+				    		opposing_three_consecutive.addAll(threeInARow(column, row));
+				    	}
+				    }
+				    if(threeSquares(column, row, aaa)[2] != 0)
+				    	aaa[threeSquares(column, row, aaa)[0]][threeSquares(column, row, aaa)[1]] = threeSquares(column, row, aaa)[2];
+				    
 				  
-					  adjacent_touches = numberTouching(column, row);
-					  getState[column][row] = 0;
-				  } 
-		          //boardPrint(g, column, row, getState[column][row]);
-			  }
+					adjacent_touches = numberTouching(column, row);
+					getState[column][row] = 0;
+				} 
+			}
 			  	
 			  row_stopper = isRowWinnable();
 			  return true;
-		  }
-			  
-			  
-		public boolean sim_play(CFGame g, boolean opp_turn, int column, int row) {
-			
-			boolean played = false;
-			
-			if(g.isRedTurn() && !opp_turn) {
-				g.play(column);
-				//getState[column][row] = 1;
-			    played = true;
-		    }
-		    else if(!g.isRedTurn() && !opp_turn && !played) {
-		    	g.play(column);
-			    //getState[column][row] = -1;
-			    played = true;
-		    }
-		    else if(g.isRedTurn() && opp_turn && !played) { 
-		      g.play(column);
-			  //getState[column][row] = -1;
-			  played = true;
-		    }
-		    else if(!g.isRedTurn() && opp_turn && !played) {
-		      g.play(column);
-			  //getState[column][row] = 1;
-			  played = true;
-		    }
-			boardPrint(g, column, row, getState[column][row]);
-	
-			return played;
 		}
+			  
 		
 		public boolean isMoveWinning() {	//sees whether there is a winning move
 			  
@@ -149,7 +136,7 @@ public class JackMaloonAI implements CFPlayer{
 		
 		public ArrayList<Integer> isRowWinnable() {	//sees whether a row be guaranteed 4 in a row in 2 turns
 			  
-			ArrayList<Integer> rw = new ArrayList<>();    //move that is illegal
+			ArrayList<Integer> rw = new ArrayList<>();    //arraylist thats hold columns that should be played
 
 			
 			for(int i=0; i<g.getNumCols()-4; i++) {
@@ -167,6 +154,101 @@ public class JackMaloonAI implements CFPlayer{
 			}  
 			  
 			  return rw;
+		}
+		
+		public ArrayList<Integer> threeInARow(int col, int row) {	      //sees whether there is an opportunity to make three in a row or block opponent from doing so
+			  
+			ArrayList<Integer> three_connected = new ArrayList<>();    ////arraylist thats hold columns that make three in a row
+			
+			
+			for(int i=0; i<g.getNumCols(); i++) {
+				for(int j=0;j<g.getNumRows(); j++) {
+					if(getState[i][j] != 0 && j<g.getNumRows()-3 && i == col && (j+2 == row) && getState[i][j] == getState[i][j+1] && getState[i][j] == getState[i][j+2] && getState[i][j+3] == 0) {
+						three_connected.add(col);
+					}
+					if(getState[i][j] != 0 && i < g.getNumCols()-2 && (i == col || i+1 == col || i+2 == col) && j == row && getState[i][j] == getState[i+1][j] && getState[i][j] == getState[i+2][j] && (i < g.getNumCols()-3 && getState[i+3][j] == 0 || i>0 && getState[i-1][j] == 0)) {
+						if(j>0 && i>0 && i<g.getNumCols()-3 && (getState[i-1][j-1]==0 || getState[i+3][j-1]==0)) {
+							three_connected.add(col);
+						    three_connected.add(col);
+						}
+						//three_connected.add(col);
+					    //three_connected.add(col);
+				    }
+				    if(getState[i][j] != 0 && i < g.getNumCols()-2 && j < g.getNumRows()-2 && (i == col && j == row || i+1 == col && j+1 == row || i+2 == col && j+2 == row) && getState[i][j] == getState[i+1][j+1] && getState[i][j] == getState[i+2][j+2] && (j < g.getNumRows()-3 &&  i < g.getNumCols()-3 && getState[i+3][j+3] == 0 || j>1 && i>1 && getState[i-1][j-1] == 0)) {
+				    	if((i<g.getNumCols()-3 && j<g.getNumRows()-3 && getState[i+3][j+2]==0) || (j==2 && i<g.getNumCols()-3 && ((i>0 && getState[i-1][j-2]==0) || getState[i+3][j+2]==0)) || (i==g.getNumCols()-3 && j>1 && getState[i-1][j-2]==0) || (j==g.getNumRows()-3 && getState[i-1][j-2]==0)) {
+				    		three_connected.add(col);
+				    		three_connected.add(col);
+				    		three_connected.add(col);
+				    		}
+				    }
+				    if(getState[i][j] != 0 && i < g.getNumCols()-2 && j >= 2 && (i == col && j == row || i+1 == col && j-1 == row || i+2 == col && j-2 == row) &&getState[i][j] == getState[i+1][j-1] && getState[i][j] == getState[i+2][j-2] && (i > 1 && j < g.getNumRows()-1 && getState[i-1][j+1] == 0 || i < g.getNumCols()-3 && j>2 && getState[i+3][j-3] == 0)) {
+				    	if(((j==3 || j==2) && i>0 && getState[i-1][j]==0) || (i>0 && i<g.getNumCols()-3 && j==4 && (getState[i-1][j]==0 || getState[i+3][j-4]==0)) || (i==0 && j>3 && getState[i+3][j-4]==0) || (j==g.getNumCols()-1 && getState[i+3][j-4]==0)) {
+				    		three_connected.add(col);
+				    		three_connected.add(col);
+				    		three_connected.add(col);
+				    	}
+				    }
+			    }  
+			}
+			  return three_connected;
+		}
+		
+		public int[] threeSquares(int col, int row, int[][] aaa) {	      //sees whether there is an opportunity to make three in a row or block opponent from doing so
+			  
+			int[] a = new int[3];
+			a[0]=0;
+			a[1]=0;
+			a[2]=0;
+			
+			
+			
+			for(int i=0; i<g.getNumCols(); i++) {
+				for(int j=0;j<g.getNumRows(); j++) {
+					if(getState[i][j] != 0 && j < g.getNumRows()-3 && i == col && (j+2 == row) && getState[i][j] == getState[i][j+1] && getState[i][j] == getState[i][j+2] && getState[i][j+3] == 0) {
+						//System.out.println("a");
+						a[0] = col;
+						a[1] = row;
+						if(aaa[col][row] != 0)
+							a[2] = 2;
+						else
+							a[2]= getState[col][row];
+						//System.out.println(aaa[col][row]);
+					}
+					if(getState[i][j] != 0 && i < g.getNumCols()-2 && (i == col || i+1 == col || i+2 == col) && j == row && getState[i][j] == getState[i+1][j] && getState[i][j] == getState[i+2][j] && (i < g.getNumCols()-3 && getState[i+3][j] == 0 || i>0 && getState[i-1][j] == 0)) {
+						a[0] = col;
+						a[1] = row;
+						if(aaa[col][row] != 0)
+							a[2] = 2;
+						else
+							a[2]= getState[col][row];
+					    //System.out.println("b");
+					    //System.out.println(aaa[col][row]);
+				    }
+				    if(getState[i][j] != 0 && i < g.getNumCols()-2 && j < g.getNumRows()-2 && (i == col && j == row || i+1 == col && j+1 == row || i+2 == col && j+2 == row) && getState[i][j] == getState[i+1][j+1] && getState[i][j] == getState[i+2][j+2] && (j < g.getNumRows()-3 &&  i < g.getNumCols()-3 && getState[i+3][j+3] == 0 || j>1 && i>1 && getState[i-1][j-1] == 0)) {
+				    	a[0] = col;
+						a[1] = row;
+						if(aaa[col][row] != 0)
+							a[2] = 2;
+						else
+							a[2]= getState[col][row];
+				    	//System.out.println("c");
+				    	//System.out.println(aaa[col][row]);
+				    }
+				    if(getState[i][j] != 0 && i < g.getNumCols()-2 && j >= 2 && (i == col && j == row || i+1 == col && j-1 == row || i+2 == col && j-2 == row) && getState[i][j] == getState[i+1][j-1] && getState[i][j] == getState[i+2][j-2] && (i > 1 && j < g.getNumRows()-1 && getState[i-1][j+1] == 0 || i < g.getNumCols()-3 && j>2 && getState[i+3][j-3] == 0)) {
+				    	a[0] = col;
+						a[1] = row;
+						if(aaa[col][row] != 0)
+							a[2] = 2;
+						else
+							a[2]= getState[col][row];
+				    	//System.out.println("d");
+				    	//System.out.println(aaa[col][row]);
+
+				    }
+			    }  
+			}
+			
+			  return a;
 		}
 		
 		
@@ -317,34 +399,57 @@ public class JackMaloonAI implements CFPlayer{
 			}
 		}
 		
-		int most_touches = max_element_array(touching_array, m.illegal_moves, m.losing_moves, m.unwise_moves, m.row_stopper);
-		return most_touches;
+		
+		int best_move = max_element_array(touching_array, m.illegal_moves, m.losing_moves, m.unwise_moves, m.row_stopper, m.AI_three_consecutive, m.opposing_three_consecutive, m.aaa);
+		return best_move;
 	}
 	
-	public int max_element_array(int[] arr, ArrayList<Integer> illegal_moves, ArrayList<Integer> losing_moves, ArrayList<Integer> unwise_moves, ArrayList<Integer> row_stopper) {
-		int max = -10;
+	public int max_element_array(int[] arr, ArrayList<Integer> illegal_moves, ArrayList<Integer> losing_moves, ArrayList<Integer> unwise_moves, ArrayList<Integer> row_stopper, ArrayList<Integer> AI_three_consecutive, ArrayList<Integer> opposing_three_consecutive, int[][] aaa) {
+		int max = -1000000;
 		int max_element = 0;
 		//System.out.println(losing_moves);
 		//System.out.println(unwise_moves);
 		//System.out.println(illegal_moves);
+		//System.out.println(AI_three_consecutive);
+		//System.out.println(opposing_three_consecutive);
+		int illegal = -1000;
+		int losing = -80;
+		int unwise = -60;
+		int row_stop = 30;
+		int three_grouped = 4;
+		int opponent_three = 3;
+			
+		for(int i=5; i>=0; i--){ 
+			for(int j=0; j<7; j++) { 
+				//System.out.print(aaa[j][i] + " ");	
+			}
+			//System.out.println(" ");
+		}
+		//System.out.println(" ");
 
 		ArrayList<Integer> duplicate_max = new ArrayList<>();
 		
 		for(int index:illegal_moves) {		//Setting values in arr to arbitrary negative value if move is illegal
-			arr[index] = -3;
+			arr[index] = illegal;
 		}
 		for(int index:losing_moves) {		//Setting values in arr to negative value if move is losing
-			arr[index] = -2;
+			arr[index] = losing;
 		}
 		for(int index:unwise_moves) {		//Setting values in arr to negative value if move is unwise. Still greater than losing since this move is better
-			arr[index] = -1;
+			arr[index] = unwise;
 		}
 		for(int index:row_stopper) {		//If a row can be "stopped", a lot of value is added to that column that "stops" it
-			arr[index] += 6;;
+			arr[index] += row_stop;
+		}
+		for(int index:AI_three_consecutive) {		//Adding value to making three in a row
+			arr[index] += three_grouped;
+		}
+		for(int index:opposing_three_consecutive) {		//Adding value to blocking three in a row
+			arr[index] += opponent_three;
 		}
 		
 		for(int i=0; i<arr.length; i++) { 
-			//System.out.print(arr[i]);
+			//System.out.print(arr[i] + " ");
 			if(arr[i] > max) {
 				max = arr[i];
 				max_element = i;
