@@ -5,8 +5,8 @@ public class CFGame {
   //state[i][j]= 0 means the i,j slot is empty
   //state[i][j]= 1 means the i,j slot has red
   //state[i][j]=-1 means the i,j slot has black
+	
   private final int[][] state;
-
   private boolean isRedTurn;		
   boolean played;			
   private int numRows = 6;
@@ -36,18 +36,18 @@ public class CFGame {
 	  
 	  played = false;
 	  
-	  if(column < 1 || column > numCols || !notFullColumn(column)) 
+	  if(column<0 || column>=numCols || !notFullColumn(column)) 
 		  return false;
 	  
-		  for(int i = 0;i<numRows;i++) {
-				  if(state[column-1][i] == 0) {	
+		  for(int row=0; row<numRows; row++) {
+				  if(state[column][row] == 0) {	
 					  if(isRedTurn) { 
-						  state[column-1][i] = 1;
+						  state[column][row] = 1;
 						  played = true;
 						  isRedTurn = false;
 					  }
 					  else if(!isRedTurn && !played) {
-						  state[column-1][i] = -1;
+						  state[column][row] = -1;
 						  isRedTurn = true;
 						  played = true;
 					  }
@@ -55,6 +55,18 @@ public class CFGame {
 				  }  
 		  }
 		  return true;
+  }
+  
+public boolean unplay(int column, int row) {		//checks if it certain column is playable, and plays it if it is
+	  
+	  played = false;
+	  
+	  if(column<0 || column>=numCols || row<0 || row>=numRows || !notFullColumn(column)) 
+		  return false;
+	  else {
+		  state[column][row] = 0;
+		  return true;
+	  }
   }
   
   public int winner() {			//returns who the winner is
@@ -104,10 +116,11 @@ public class CFGame {
    	 return numCols;
   }
  
-  public boolean notFullColumn(int c) {		//checks to see whether the top column is full for play method
+  public boolean notFullColumn(int col) {		//checks to see whether the top column is full for play method
 	 
-	 if(state[c-1][numRows-1] != 0)
+	 if(state[col][numRows-1] != 0)
 		 return false;
+	 
 	 return true;
   }
 }
