@@ -52,7 +52,7 @@ public class ConsoleCF extends CFGame{
 			if(isHumanPlaying) {
 
 				boardPrint();			//prints board to human player
-				play(hp.nextMove(this));
+				play(hp.nextMove(this)-1);
 				
 				if(!isGameOver())
 					play(ai1.nextMove(this));
