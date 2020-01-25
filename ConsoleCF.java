@@ -41,10 +41,9 @@ public class ConsoleCF extends CFGame{
 		while(!isGameOver()) {
 			
 			if(!isHumanPlaying) {
-				
 				play(ai2.nextMove(this));
-
-				if(!isGameOver());
+				boardPrint();
+				if(!isGameOver())
 					play(ai1.nextMove(this));
 			
 			}
@@ -71,10 +70,17 @@ public class ConsoleCF extends CFGame{
 			
 			if(!isWinner())
 				return "Draw";
-			else if(!isRedTurn() && ai1First || isRedTurn() && !ai1First)
+			else if(!isRedTurn() && ai1First || isRedTurn() && !ai1First) 
 				return ai1.getName();
-			else
+			else {
+				//System.out.println("");
+				//System.out.println("");
+				//boardPrint();
+				//System.out.println("");
+				//System.out.println("");
 				return ai2.getName();
+				
+			}
 		}
 		else {
 			
