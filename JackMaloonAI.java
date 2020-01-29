@@ -76,8 +76,11 @@ public class JackMaloonAI implements CFPlayer{
 				    
 				    if(!winning_move && (row==0 || (row>0 && getState[column][row-1]!=0))) {
 				    	if(!already_winning_column) {
-				    		winningColumnCreator(column, row);	
+				    		winningColumnCreator(column, row);
+				    	if(!opp_turn && !winning_column.contains(column)) {
 				    		losingBoardCreator(column, row);
+				    		
+				    	}
 				    	}
 					}
 					
@@ -95,30 +98,27 @@ public class JackMaloonAI implements CFPlayer{
 			
 			four_potential_map = fourMap();
 			boolean opponent_can_win = false;
+			int num_squares = g.getNumCols();
 			
 			for(int i=0; i<g.getNumCols(); i++) {    //looks at places on board where four in a row can be made and if two of same color on top of each other, indicates winning column
 				for(int j=0;j<g.getNumRows(); j++) {
+					
 					if(j<g.getNumRows()-1 && four_potential_map[i][j]!=0 && four_potential_map[i][j+1]!=0 
 					   && ((four_potential_map[i][j]==four_potential_map[i][j+1] || four_potential_map[i][j+1]==2))) {
+						
 						for(int num=0; num<j; num++) {
 							if(four_potential_map[i][num]==opponent_color)
 								opponent_can_win = true;
 						}
 						
-						System.out.println("four map");
-						for(int c=5; c>=0; c--) {
-							for(int r=0; r<g.getNumCols(); r++) {
-								System.out.print(four_potential_map[r][c]);
-							}
-							System.out.println("");
-						}
-						System.out.println("");
 						
 						if(!opponent_can_win) {
 							System.out.println("winning column is " + i);
 							already_winning_column = true;
-							if(!winning_column.contains(i) && (four_potential_map[i][j]==AI_color || four_potential_map[i][j+1]==AI_color))
+							if(!winning_column.contains(i) && (four_potential_map[i][j]==AI_color || four_potential_map[i][j+1]==AI_color) && j<num_squares) {
 								winning_column.add(i);
+								num_squares = j;
+							}
 						}
 					}
 				}
@@ -204,18 +204,24 @@ public class JackMaloonAI implements CFPlayer{
 						}
 						else if(j>0 && getState[i][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)) {
 							System.out.println('b');
-							if(!loss_creator.contains(i+4))
+							if(!loss_creator.contains(i+4) && getState[i+2][j]==opponent_color)
 								loss_creator.add(i+4);
+							else if(!unwise_moves.contains(i+4) && getState[i+2][j]==AI_color)
+								unwise_moves.add(i+4);
 						}
 						else if(j>0 && getState[i][j-1]!=0 && getState[i+1][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)) {
 							System.out.println('c');
-							if(!loss_creator.contains(i+1))
+							if(!loss_creator.contains(i+1) && getState[i+2][j]==opponent_color)
 								loss_creator.add(i+1);
+							else if(!unwise_moves.contains(i+1) && getState[i+2][j]==AI_color)
+								unwise_moves.add(i+1);
 						}
 						else if(j>0 && getState[i][j-1]==0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i][j-2]!=0)) {
 							System.out.println('d');
-							if(!loss_creator.contains(i))
+							if(!loss_creator.contains(i) && getState[i+2][j]==opponent_color)
 								loss_creator.add(i);
+							else if(!unwise_moves.contains(i) && getState[i+2][j]==AI_color)
+								unwise_moves.add(i);
 						}
 					}
 					
@@ -228,18 +234,24 @@ public class JackMaloonAI implements CFPlayer{
 						}
 						else if(j>0 && getState[i][j-1]!=0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)) {
 							System.out.println('f');
-							if(!loss_creator.contains(i+4))
+							if(!loss_creator.contains(i+4) && getState[i+2][j]==opponent_color)
 								loss_creator.add(i+4);
+							else if(!unwise_moves.contains(i+4) && getState[i+2][j]==AI_color)
+								unwise_moves.add(i+4);
 						}
 						else if(j>0 && getState[i][j-1]!=0 && getState[i+3][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+3][j-2]!=0)) {
 							System.out.println('g');
-							if(!loss_creator.contains(i+3))
+							if(!loss_creator.contains(i+3) && getState[i+2][j]==opponent_color)
 								loss_creator.add(i+3);
+							else if(!unwise_moves.contains(i+3) && getState[i+2][j]==AI_color)
+								unwise_moves.add(i+3);
 						}
 						else if(j>0 && getState[i][j-1]==0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i][j-2]!=0)) {
 							System.out.println('h');
-							if(!loss_creator.contains(i))
+							if(!loss_creator.contains(i) && getState[i+2][j]==opponent_color)
 								loss_creator.add(i);
+							else if(!unwise_moves.contains(i) && getState[i+2][j]==AI_color)
+								unwise_moves.add(i);
 						}
 					}
 					
@@ -252,18 +264,24 @@ public class JackMaloonAI implements CFPlayer{
 						}
 						else if(j>0 && getState[i-1][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]==0 && (j==1 || j>1 && getState[i+3][j-2]!=0)) {
 							System.out.println('j');
-							if(!loss_creator.contains(i+3))
+							if(!loss_creator.contains(i+3) && getState[i][j]==opponent_color)
 								loss_creator.add(i+3);
+							else if(!unwise_moves.contains(i+3) && getState[i][j]==AI_color)
+								unwise_moves.add(i+3);
 						}
 						else if(j>0 && getState[i-1][j-1]!=0 && getState[i+1][j-1]==0 && getState[i+3][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)) {
 							System.out.println('k');
-							if(!loss_creator.contains(i+1))
+							if(!loss_creator.contains(i+1) && getState[i][j]==opponent_color)
 								loss_creator.add(i+1);
+							else if(!unwise_moves.contains(i+1) && getState[i][j]==AI_color)
+								unwise_moves.add(i+1);
 						}
 						else if(j>0 && getState[i-1][j-1]==0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]!=0 && (j==1 || j>1 && getState[i-1][j-2]!=0)) {
 							System.out.println('l');
-							if(!loss_creator.contains(i-1))
+							if(!loss_creator.contains(i-1) && getState[i][j]==opponent_color)
 								loss_creator.add(i-1);
+							else if(!unwise_moves.contains(i-1) && getState[i][j]==AI_color)
+								unwise_moves.add(i-1);
 						}
 					}
 					
@@ -282,24 +300,32 @@ public class JackMaloonAI implements CFPlayer{
 						else if(j>0 && getState[i+1][j-1]==0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) 
 							    && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)){
 							System.out.println('n');
-							if(!loss_creator.contains(i+1))
+							if(!loss_creator.contains(i+1) && getState[i][j]==opponent_color)
 								loss_creator.add(i+1);
+							else if(!unwise_moves.contains(i+1) && getState[i][j]==AI_color)
+								unwise_moves.add(i+1);
 						}
 						else if(j>0 && getState[i+1][j-1]!=0 && getState[i+2][j]==0 && getState[i+2][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+2][j-2]!=0)){
 							System.out.println('o');
-							if(!loss_creator.contains(i+2))
+							if(!loss_creator.contains(i+2) && getState[i][j]==opponent_color)
 								loss_creator.add(i+2);
+							else if(!unwise_moves.contains(i+2) && getState[i][j]==AI_color)
+								unwise_moves.add(i+2);
 						}
 						else if(j>0 && getState[i+1][j-1]!=0 && getState[i+3][j]==0 && getState[i+3][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+3][j-2]!=0)){
 							System.out.println('p');
-							if(!loss_creator.contains(i+3))
+							if(!loss_creator.contains(i+3) && getState[i][j]==opponent_color)
 								loss_creator.add(i+3);
+							else if(!unwise_moves.contains(i+3) && getState[i][j]==AI_color)
+								unwise_moves.add(i+3);
 						}
 						else if(j>0 && getState[i+1][j-1]!=0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) 
 							    && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)){
 							System.out.println('q');
-							if(!loss_creator.contains(i+4))
+							if(!loss_creator.contains(i+4) && getState[i][j]==opponent_color)
 								loss_creator.add(i+4);
+							else if(!unwise_moves.contains(i+4) && getState[i][j]==AI_color)
+								unwise_moves.add(i+4);
 						}
 					}
 
@@ -313,18 +339,24 @@ public class JackMaloonAI implements CFPlayer{
 						}
 						else if(i>0 && j>1 && getState[i-1][j-2]==0 && (j==2 || getState[i-1][j-3]!=0) && getState[i][j-1]!=0 && getState[i+3][j+2]!=0) {
 							System.out.println('s');
-							if(!loss_creator.contains(i-1))
+							if(!loss_creator.contains(i-1) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i-1);
+							else if(!unwise_moves.contains(i-1) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i-1);
 						}
 						else if(i>0 && (j==1 || j>1 && getState[i-1][j-2]!=0 && getState[i][j-2]!=0) && getState[i][j-1]==0 && getState[i+3][j+2]!=0) {
 							System.out.println('t');
-							if(!loss_creator.contains(i))
+							if(!loss_creator.contains(i) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i);
+							else if(!unwise_moves.contains(i) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i);
 						}
 						else if(i>0 && (j==1 || j>1 && getState[i-1][j-2]!=0) && getState[i][j-1]!=0 && getState[i+3][j+2]==0 && getState[i+3][j+1]!=0) {
 							System.out.println('u');
-							if(!loss_creator.contains(i+3))
+							if(!loss_creator.contains(i+3) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i+3);
+							else if(!unwise_moves.contains(i+3) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i+3);
 						}
 						
 						if((j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]!=0) {    //two open on right upper diagonal
@@ -334,43 +366,55 @@ public class JackMaloonAI implements CFPlayer{
 						}
 						else if(j>0 && getState[i][j-1]==0 && (j==1 || getState[i][j-2]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]!=0) {
 							System.out.println('w');
-							if(!loss_creator.contains(i))
+							if(!loss_creator.contains(i) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i);
+							else if(!unwise_moves.contains(i) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i);
 						}
 						else if((j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]==0 && getState[i+3][j+1]!=0 && getState[i+4][j+3]!=0) {
 							System.out.println('x');
-							if(!loss_creator.contains(i+3))
+							if(!loss_creator.contains(i+3) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i+3);
+							else if(!unwise_moves.contains(i+3) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i+3);
 						}
 						else if((j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]==0 && getState[i+4][j+2]!=0) {
 							System.out.println('y');
-							if(!loss_creator.contains(i+4))
+							if(!loss_creator.contains(i+4) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i+4);
+							else if(!unwise_moves.contains(i+4) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i+4);
 						}		
 					}
 					
 					if(j<g.getNumRows()-4 && getState[i][j]==0 && getState[i+1][j+1]!=0 && getState[i+2][j+2]==0   //upper diagonal middle open
 					   && getState[i+1][j+1]==getState[i+3][j+3] && getState[i+4][j+4]==0) {
 
-						if((j==0 || getState[i][j-1]!=0) && getState[i+1][j]!=0 && getState[i+3][j+2]!=0) {
+						if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]!=0) {
 							System.out.println('z');
-							if(!loss_avoider.contains(i))
-								loss_avoider.add(i);
+							if(!loss_avoider.contains(i+2))
+								loss_avoider.add(i+2);
 						}
 						else if(j>0 && getState[i][j-1]==0 && (j==1 || getState[i][j-2]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]!=0) {
 							System.out.println("aa");
-							if(!loss_creator.contains(i))
+							if(!loss_creator.contains(i) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i);
+							else if(!unwise_moves.contains(i) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i);
 						}
 						else if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]==0 && getState[i+2][j]!=0 && getState[i+4][j+3]!=0) {
 							System.out.println("bb");
-							if(!loss_creator.contains(i+2))
+							if(!loss_creator.contains(i+2) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i+2);
+							else if(!unwise_moves.contains(i+2) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i+2);
 						}
 						else if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]==0 && getState[i+4][j+2]!=0) {
 							System.out.println("cc");
-							if(!loss_creator.contains(i+4))
+							if(!loss_creator.contains(i+4) && getState[i+1][j+1]==opponent_color)
 								loss_creator.add(i+4);
+							else if(!unwise_moves.contains(i+4) && getState[i+1][j+1]==AI_color)
+								unwise_moves.add(i+4);
 						}		
 						
 					}
@@ -384,18 +428,24 @@ public class JackMaloonAI implements CFPlayer{
 						}
 						else if(i>0 && getState[i-1][j]==0 && getState[i-1][j-1]!=0 && getState[i-1][j-1]!=0 && getState[i][j-1]!=0 && (j==3 || getState[i+3][j-4]!=0)) {
 							System.out.println("ee");
-							if(!loss_creator.contains(i-1))
+							if(!loss_creator.contains(i-1) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i-1);
+							else if(!unwise_moves.contains(i-1) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i-1);
 						}
 						else if(i>0 && getState[i-1][j]!=0 && getState[i][j-1]==0 && getState[i][j-2]!=0 && (j==3 || getState[i+3][j-4]!=0)) {
 							System.out.println("ff");
-							if(!loss_creator.contains(i))
+							if(!loss_creator.contains(i) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i);
+							else if(!unwise_moves.contains(i) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i);
 						}
 						else if(i>0 && j>3 && getState[i-1][j]!=0 && getState[i][j-1]!=0 && getState[i+3][j-4]==0 && (j==4 || getState[i+3][j-5]!=0)) {
 							System.out.println("gg");
-							if(!loss_creator.contains(i+3))
+							if(!loss_creator.contains(i+3) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i+3);
+							else if(!unwise_moves.contains(i+3) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i+3);
 						}
 						
 						if(j>3 && getState[i][j-1]!=0 && getState[i+3][j-4]!=0 && (j==4 || getState[i+4][j-5]!=0)) {   //lower diagonal two open right
@@ -405,18 +455,24 @@ public class JackMaloonAI implements CFPlayer{
 						}
 						else if(j>3 && getState[i][j-1]==0 && getState[i][j-2]!=0 && getState[i+3][j-4]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
 							System.out.println("ii");
-							if(!loss_creator.contains(i))
+							if(!loss_creator.contains(i) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i);
+							else if(!unwise_moves.contains(i) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i);
 						}
 						else if(j>3 && getState[i][j-1]!=0 && getState[i+3][j-4]==0 && (j==4 || getState[i+3][j-5]!=0 && getState[i+4][j-5]!=0)) {
 							System.out.println("jj");
-							if(!loss_creator.contains(i+3))
+							if(!loss_creator.contains(i+3) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i+3);
+							else if(!unwise_moves.contains(i+3) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i+3);
 						}
 						else if(j>4 && getState[i][j-1]!=0 && getState[i+3][j-4]!=0 && getState[i+4][j-5]==0) {
 							System.out.println("kk");
-							if(!loss_creator.contains(i+4))
+							if(!loss_creator.contains(i+4) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i+4);
+							else if(!unwise_moves.contains(i+4) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i+4);
 						}	
 					}
 					
@@ -424,23 +480,29 @@ public class JackMaloonAI implements CFPlayer{
 						
 						if(getState[i][j-1]!=0 && getState[i+2][j-3]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
 							System.out.println("ll");
-							if(!loss_avoider.contains(i+3))
-								loss_avoider.add(i+3);
+							if(!loss_avoider.contains(i+2))
+								loss_avoider.add(i+2);
 						}
 						else if(getState[i][j-1]==0 && getState[i][j-2]!=0 && getState[i+2][j-3]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
 							System.out.println("mm");
-							if(!loss_creator.contains(i))
+							if(!loss_creator.contains(i) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i);
+							else if(!unwise_moves.contains(i) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i);
 						}
 						else if(getState[i][j-1]!=0 && getState[i+2][j-3]==0 && getState[i+2][j-4]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
 							System.out.println("nn");
-							if(!loss_creator.contains(i+2))
+							if(!loss_creator.contains(i+2) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i+2);
+							else if(!unwise_moves.contains(i+2) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i+2);
 						}
 						else if(j>4 &getState[i][j-1]!=0 && getState[i+2][j-3]!=0 && getState[i+4][j-5]==0) {
 							System.out.println("oo");
-							if(!loss_creator.contains(i+4))
+							if(!loss_creator.contains(i+4) && getState[i+1][j-1]==opponent_color)
 								loss_creator.add(i+4);
+							else if(!unwise_moves.contains(i+4) && getState[i+1][j-1]==AI_color)
+								unwise_moves.add(i+4);
 						}
 					}				
 				}
@@ -464,9 +526,9 @@ public class JackMaloonAI implements CFPlayer{
 							winning_column.add(column);
 					}	
 					if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
-						System.out.println("");
-						System.out.println("aicol " + column);
-						System.out.println("airow " + row);
+						//System.out.println("");
+						//System.out.println("aicol " + column);
+						//System.out.println("airow " + row);
 						
 						if(!ai_winning_moves.containsKey(column))
 							ai_winning_moves.put(column, 1);
@@ -476,9 +538,9 @@ public class JackMaloonAI implements CFPlayer{
 						}
 					}
 					else if(four_map[i][j]==opponent_color && (j==0 || getState[i][j-1]!=0)) {
-						System.out.println("");
-						System.out.println("oppcol " + column);
-						System.out.println("opprow " + row);
+						//System.out.println("");
+						//System.out.println("oppcol " + column);
+						//System.out.println("opprow " + row);
 						
 						if(!opp_winning_moves.containsKey(column))
 							opp_winning_moves.put(column, 1);
@@ -491,8 +553,8 @@ public class JackMaloonAI implements CFPlayer{
 			}
 			
 			for(int num=0; num<g.getNumCols(); num++){
-				if((ai_winning_moves.containsKey(num) && ai_winning_moves.get(num)>1) || (opp_winning_moves.containsKey(num) && opp_winning_moves.get(num)>1)) { 
-					//winning_column.add(num);
+				if(!winning_column.contains(column) && (ai_winning_moves.containsKey(num) && ai_winning_moves.get(num)>1) || (opp_winning_moves.containsKey(num) && opp_winning_moves.get(num)>1)) { 
+					winning_column.add(num);
 					System.out.println("sdefihedfhweifhiefh");
 				}
 			}			
@@ -501,83 +563,101 @@ public class JackMaloonAI implements CFPlayer{
 		public void losingBoardCreator(int column, int row){
 			
 			future_winning_move = -1;
-			HashMap<Integer, Integer> opp_winning_creator;
-			HashMap<Integer, Integer> ai_winning_creator;
-			
-			
+			HashMap<Integer, Integer> opp_winning_creator = new HashMap<>();
+			HashMap<Integer, Integer> ai_winning_creator = new HashMap<>();
 			int[][] four_map;
 			int[] arr = {-1,1};
 
 			for(int c=0; c<g.getNumCols(); c++) {
 				for(int r=0; r<g.getNumRows()-1; r++) {
-					for(int num:arr) {
-						if(getState[c][r]==0) {
-							opp_winning_creator = new HashMap<>();
-							ai_winning_creator = new HashMap<>();
-							
-							getState[c][r] = num;
-							four_map = fourMap();
-							
-							for(int i=0; i<g.getNumCols(); i++) {
-								for(int j=0; j<g.getNumRows()-1; j++) {
-									if(four_map[i][j]!=0 && four_map[i][j+1]!=0 && (four_map[i][j]==four_map[i][j+1] ||  four_map[i][j+1]==2)) {
-										
-										//if(!winning_column.contains(column))
-											//winning_column.add(column);
-									}	
-									
-									if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
-										System.out.println("");
-										System.out.println("aicol " + column);
-										System.out.println("airow " + row);
-										
-										if(!ai_winning_creator.containsKey(column))
-											ai_winning_creator.put(column, 1);
-										else {
-											int count = ai_winning_creator.get(column);
-											ai_winning_creator.put(column, count+1);
-										}
-									}
-									else if(four_map[i][j]==opponent_color && (j==0 || getState[i][j-1]!=0)) {
-										System.out.println("");
-										System.out.println("oppcol " + column);
-										System.out.println("opprow " + row);
-										
-										if(!opp_winning_creator.containsKey(column))
-											opp_winning_creator.put(column, 1);
-										else {
-											int count = opp_winning_creator.get(column);
-											opp_winning_creator.put(column, count+1);
-										}
-									}	
+					if(getState[c][r]==0 && (r==0||getState[c][r-1]!=0) && !winning_column.contains(c)) {
+						opp_winning_creator = new HashMap<>();
+						ai_winning_creator = new HashMap<>();
+						
+						getState[c][r] = opponent_color;
+						four_map = fourMap();
+						
+						
+						if(c==6 && r==2) {
+							System.out.println("fourmap");
+							System.out.println(opp_winning_creator);
+							for(int cc=5; cc>=0; cc--) {
+								for(int rr=0; rr<g.getNumCols(); rr++) {
+									System.out.print(four_map[rr][cc]);
 								}
+								System.out.println("");
 							}
-							getState[c][r] = 0;
+							System.out.println("");
+						}
 						
 						
-							for(int col_num=0; col_num<g.getNumCols(); col_num++){
-								if((ai_winning_creator.containsKey(num) && ai_winning_creator.get(col_num)>1) || (opp_winning_creator.containsKey(col_num) && opp_winning_creator.get(col_num)>1)) { 
-									System.out.println("fourmap " + ai_winning_creator.get(col_num));
-									for(int cc=5; cc>=0; cc--) {
-										for(int rr=0; rr<g.getNumCols(); rr++) {
-											System.out.print(four_potential_map[rr][cc]);
-										}
-										System.out.println("");
+						
+						
+						for(int i=0; i<g.getNumCols(); i++) {
+							for(int j=0; j<g.getNumRows()-1; j++) {
+								if(four_map[i][j]!=0 && four_map[i][j+1]!=0 && (four_map[i][j]==four_map[i][j+1] ||  four_map[i][j+1]==2)
+								   && !loss_creator.contains(column) && (four_map[i][j]==opponent_color || four_map[i][j+1]==opponent_color))
+										loss_creator.add(column);
+								
+								/*
+								
+								if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
+									//System.out.println("");
+									//System.out.println("aicol " + column);
+									//System.out.println("airow " + row);
+									
+									if(!ai_winning_creator.containsKey(column))
+										ai_winning_creator.put(column, 1);
+									else {
+										int count = ai_winning_creator.get(column);
+										ai_winning_creator.put(column, count+1);
+									}
+								}
+								*/
+								if(four_map[i][j]==opponent_color && (j==0 || getState[i][j-1]!=0)) {
+									//System.out.println("");
+									//System.out.println("oppcol " + column);
+									//System.out.println("opprow " + row);
+									
+									if(!opp_winning_creator.containsKey(column))
+										opp_winning_creator.put(column, 1);
+									else {
+										int count = opp_winning_creator.get(column);
+										opp_winning_creator.put(column, count+1);
+									}
+								}	
+							}
+						}
+						getState[c][r] = 0;
+					
+
+						for(int col_num=0; col_num<g.getNumCols(); col_num++){
+							if((!ai_winning_creator.isEmpty() && ai_winning_creator.containsKey(col_num) && ai_winning_creator.get(col_num)>1) 
+							    || (!opp_winning_creator.isEmpty() && opp_winning_creator.containsKey(col_num) && opp_winning_creator.get(col_num)>1)) { 
+								
+								System.out.println("fourmap");
+								System.out.println(opp_winning_creator);
+								for(int cc=5; cc>=0; cc--) {
+									for(int rr=0; rr<g.getNumCols(); rr++) {
+										System.out.print(four_map[rr][cc]);
 									}
 									System.out.println("");
-									//winning_column.add(num);
-									System.out.println("lbc");
+								}
+								System.out.println("");
+								if(!loss_creator.contains(col_num)) {
+									loss_creator.add(col_num);
+									System.out.println("column " + column);
+									System.out.println("row " + row);
+									System.out.println("c " + c);
+									System.out.println("r " + r);
+									System.out.println("num " + opponent_color);
 								}
 							}
 						}
-						
 					}
 					
-					
+				}
 			}
-			
-		}
-			
 		}
 		
 		public void threeInARow(int column, int row) {	      //sees whether there is an opportunity to make three in a row or block opponent from doing so
@@ -888,6 +968,7 @@ public class JackMaloonAI implements CFPlayer{
 			if(m.pretendPlay(col, true)) {
 				if(m.winning_move) 
 					return col;	
+				
 				quality_array[col] += m.num_touching;
 			}
 		}
@@ -913,8 +994,9 @@ public class JackMaloonAI implements CFPlayer{
 		System.out.println("opp blockable " + opposing_three_blockable);
 		System.out.println("winning column " + winning_column);
 		System.out.println("loss avoider " + loss_avoider);
-		System.out.println("loss creator " + loss_creator);
+		
 		*/
+		System.out.println("loss creator " + loss_creator);
 		int illegal = -10000;
 		int losing = -1000;
 		int unwise = -150;
