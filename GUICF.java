@@ -46,7 +46,12 @@ public class GUICF extends CFGame{
 	private class newGameButtonListener extends CFGame implements ActionListener{
 		
 		public void actionPerformed(ActionEvent e){		//plays a move in the ai vs. ai game after 'play' button is pressed
-			new GUICF(ai1);
+			if(humanvsAI)
+				new GUICF(ai1);
+			else if(humanvsHuman)
+				new GUICF();
+			else
+				new GUICF(ai1, ai2);
 					
 		}
 	}
@@ -59,7 +64,8 @@ public class GUICF extends CFGame{
 	}
 	
 	private GameBoard this_board;
-	private boolean humanPlaying = false;
+	private boolean humanvsAI = false;
+	private boolean humanvsHuman = false;
 	private boolean aiPlayed;
 	private boolean ai1turn = false;
 	private boolean moveWorked = true;
@@ -75,10 +81,30 @@ public class GUICF extends CFGame{
 	JButton gameOver;
 	JButton replay;
 	
+	public GUICF () {		//sets up human vs. ai GUI game
+
+		humanvsHuman = true;
+		this_board = new GameBoard();
+		Random rand = new Random();
+		
+		buttonPanel = new JPanel();
+		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
+		buttonPanel.setLayout(new GridLayout(1, getNumCols()));
+		buttons = new JButton[getNumCols()]; 		//sets up buttons for the user to use when playing
+	
+		for(int i=0; i<getNumCols(); i++) {
+			
+			buttons[i] = new JButton("\u2193");
+			buttons[i].addActionListener(new ButtonListener(i));		//gives buttons functionality when playing
+			buttonPanel.add(buttons[i]);	 
+		}
+		
+	}
+	
 	public GUICF (CFPlayer ai) {		//sets up human vs. ai GUI game
 
 		ai1 = ai;
-		humanPlaying = true;
+		humanvsAI = true;
 		this_board = new GameBoard();
 		Random rand = new Random();
 		
@@ -141,10 +167,15 @@ public class GUICF extends CFGame{
 					if(isGameOver() && !isWinner()) 		//checks to see if the game is a draw
 						drawButton();						//calls the button that replaces game button(s) to display "draw" and close the game
 					
-					if(humanPlaying && !firstTurn) {		//if a human is playing, plays an ai move
+					if(humanvsAI && !firstTurn) {		//if a human is playing, plays an ai move
 						if(!isGameOver() && moveWorked && !aiPlayed) {		//plays ai move
 							aiPlayed = true;
 							playGUI(ai1.nextMove(this));
+						}	
+					}
+					else if(humanvsHuman && !firstTurn) {		//if a human is playing, plays an ai move
+						if(!isGameOver() && moveWorked && !aiPlayed) {		//plays ai move
+							
 						}	
 					}
 				  return true;
@@ -207,7 +238,7 @@ public class GUICF extends CFGame{
 	
 	void winnerButton() {		//creates a button with the winner's name on it to replace game button(s)
 		
-		if(humanPlaying) {
+		if(humanvsAI || humanvsHuman) {
 			for(int i = 0; i<getNumCols(); i++) {
 				buttons[i].setVisible(false); 
 			}
@@ -241,9 +272,16 @@ public class GUICF extends CFGame{
 	
 	void winnerName() {		//makes a button to display who the winner is
 		
-		if(humanPlaying) {
+		if(humanvsAI) {
 			if(aiPlayed) 
 				gameOver = new JButton("Game is Over! " + ai1.getName() + " Wins. Click Here to Exit.");
+				
+			else
+				gameOver = new JButton("Game is Over! You Win. Click Here to Exit.");
+		}
+		else if(humanvsHuman) {
+			if(aiPlayed) 
+				gameOver = new JButton("Game is Over! You Win. Click Here to Exit.");
 				
 			else
 				gameOver = new JButton("Game is Over! You Win. Click Here to Exit.");
