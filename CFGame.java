@@ -7,16 +7,23 @@ public class CFGame {
   //state[i][j]=-1 means the i,j slot has black
 	
   private final int[][] state;
+  private int[] moves_played;
   private boolean isRedTurn;		
   boolean played;			
   private int numRows = 6;
   private int numCols = 7;
+  private int move_num = 0;
   
   {
     state = new int[numCols][numRows];
-    for (int i=0; i<numCols; i++)
-      for (int j=0; j<numRows; j++)
-        state[i][j] = 0;
+    moves_played = new int[numCols*numRows];
+    
+    
+    for (int i=0; i<numCols; i++) {
+    	for (int j=0; j<numRows; j++) {
+    		state[i][j] = 0;
+    	}
+    }
     isRedTurn = true; //red goes first
   }
     
@@ -36,6 +43,7 @@ public class CFGame {
 	  
 	  played = false;
 	  
+	  
 	  if(column<0 || column>=numCols || !notFullColumn(column)) 
 		  return false;
 	  
@@ -43,11 +51,13 @@ public class CFGame {
 				  if(state[column][row] == 0) {	
 					  if(isRedTurn) { 
 						  state[column][row] = 1;
+						  gameMoves(column, false);
 						  played = true;
 						  isRedTurn = false;
 					  }
 					  else if(!isRedTurn && !played) {
 						  state[column][row] = -1;
+						  gameMoves(column, false);
 						  isRedTurn = true;
 						  played = true;
 					  }
@@ -57,16 +67,37 @@ public class CFGame {
 		  return true;
   }
   
-public boolean unplay(int column, int row) {		//checks if it certain column is playable, and plays it if it is
+  public boolean unplay(int column, int row) {		//undoes a move
 	  
 	  played = false;
 	  
-	  if(column<0 || column>=numCols || row<0 || row>=numRows || !notFullColumn(column)) 
+	  if(column<0 || column>=numCols || row<0 || row>=numRows || !notFullColumn(column) ||state[column][row]==0) 
 		  return false;
 	  else {
 		  state[column][row] = 0;
 		  return true;
 	  }
+  }
+  
+  public void gameMoves(int column, boolean undo) {
+	  
+	  if(!undo) {
+		  moves_played[move_num] = column;
+		  move_num++;
+	  }
+	  else {
+		  move_num--;
+		  moves_played[move_num] = 0;		  
+	  }
+  }
+  
+  public void printGameMoves() {
+	  
+	  System.out.println("moves_played");
+	  for(int move:moves_played) {
+		  System.out.print(move + ", ");
+	  }
+	  System.out.println("");
   }
   
   public int winner() {			//returns who the winner is
@@ -88,9 +119,9 @@ public boolean unplay(int column, int row) {		//checks if it certain column is p
 			  if(state[i][j] != 0 && (j+3<numRows && state[i][j] == state[i][j+1] && state[i][j] == state[i][j+2] && state[i][j] == state[i][j+3] 
 					  || i+3 < numCols && state[i][j] == state[i+1][j] && state[i][j] == state[i+2][j] && state[i][j] == state[i+3][j]
 					  || j+3<numRows &&  i+3 < numCols && state[i][j] == state[i+1][j+1] && state[i][j] == state[i+2][j+2] && state[i][j] == state[i+3][j+3]
-					  ||  i+3 < numCols && j-3 >= 0 && state[i][j] == state[i+1][j-1] && state[i][j] == state[i+2][j-2] && state[i][j] == state[i+3][j-3]))
-				  
-				  	  return true;
+					  ||  i+3 < numCols && j-3 >= 0 && state[i][j] == state[i+1][j-1] && state[i][j] == state[i+2][j-2] && state[i][j] == state[i+3][j-3])) 
+				  	  
+				  return true;
 		  }  
 	  }
 	  return false;
