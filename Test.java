@@ -4,6 +4,7 @@ package hw4;
 import java.util.Scanner;
 import hw4.CFPlayer;
 import hw4.RandomAI;
+
 import hw4.JackMaloonAI;
 import hw4.ConsoleCF;
 import hw4.GUICF;
@@ -18,26 +19,39 @@ public class Test {
     
     
     if (gameMode==1) {			//starts a GUI game with human playing ai, can also be changed to make it an ai vs. ai game
-      new GUICF(new JackMaloonAI());
+      //new GUICF(new JackMaloonAI());
+      new GUICF();
     } 
     else if (gameMode==2) {		//starts a console game with ai vs. ai, checks to see is personal ai wins and returns win probability with monte carlo simulation
-    
+      
       CFPlayer ai1 = new JackMaloonAI();
-      CFPlayer ai2 = new RandomAI();
-      int n = 100000;
+      CFPlayer ai2 = new TrialAI();
+      int n = 10000;
       int ai1winCount = 0;
       int ai2winCount = 0;
-      
+      long startTime = System.currentTimeMillis();
       for (int i=0; i<n; i++) {
         ConsoleCF game = new ConsoleCF(ai1, ai2);
         game.playOut();
-
-        if(game.getWinner() == ai1.getName())
+        
+        String winner = game.getWinner();
+        
+        if(winner == ai1.getName()) {
           ai1winCount++;
-        if(game.getWinner() == ai2.getName())
+          //System.out.println("ai1 " + ai1.getName());
+        }
+        if(winner == ai2.getName()) {
+        	
             ai2winCount++;
+            game.printGameMoves();
+            break;
+            //System.out.println("ai2 " + ai2.getName());
+        }
+        
       }
-      
+      long endTime = System.currentTimeMillis();
+
+     System.out.println("Game took " + (endTime - startTime) + " milliseconds");
 
       System.out.println(((double) ai1winCount)/n);
       System.out.println(((double) ai2winCount)/n);
