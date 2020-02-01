@@ -1,4 +1,4 @@
-package hw4;
+
 import java.util.Random;
 
 public class RandomAI implements CFPlayer{
@@ -14,7 +14,7 @@ public class RandomAI implements CFPlayer{
 			
 			c = rand.nextInt(7);		//re-randomizes variable until it makes a legal move
 		}	
-		return c+1; 
+		return c; 
 	}
 	
 	public String getName() {

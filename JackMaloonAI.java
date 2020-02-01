@@ -1,5 +1,4 @@
-package hw4;
-//make it so bad move is involved with touches
+
 import java.util.*;
 
 public class JackMaloonAI implements CFPlayer{
@@ -25,10 +24,11 @@ public class JackMaloonAI implements CFPlayer{
 		private int future_winning_move;
 		private int[][] three_potential_map;
 		private int[][] four_potential_map;
+		private int[][] simulated_four_map;
 		private int[][] initial_four_map;
 		private boolean already_winning_column = false;
 		private int num_touching;
-		private int q = 0;
+		int q = 0;
 		long startTime;
 		long endTime;
 		
@@ -66,6 +66,8 @@ public class JackMaloonAI implements CFPlayer{
 			
 			for(int row=g.getNumRows()-1; row>=0; row--) { 		//simulates move and what number will be played on move(1 or -1)
 
+				
+				
 				if(getState[column][row] == 0) {	
 						  
 				    if((g.isRedTurn() && !opp_turn) || (!g.isRedTurn() && opp_turn))
@@ -73,67 +75,25 @@ public class JackMaloonAI implements CFPlayer{
 				    else if((!g.isRedTurn() && !opp_turn) || (g.isRedTurn() && opp_turn)) 
 					    getState[column][row] = -1;
 				    
-				    ArrayList<Integer> three_unblockable = new ArrayList<>();    ////arraylist thats hold columns that make three in a row that aren't blockable
-					ArrayList<Integer> three_blockable = new ArrayList<>();    ////arraylist thats hold columns that make three in a row that are blockable
-					HashMap<Integer, Integer> ai_winning_moves = new HashMap<>();
-					HashMap<Integer, Integer> opp_winning_moves = new HashMap<>();
-					HashMap<Integer, Integer> ai_winning_creator = new HashMap<>();
-					HashMap<Integer, Integer> opp_winning_creator = new HashMap<>();
-					int[][] trial_four_map = fourMap();
-					
+				    simulated_four_map = fourMap();
 				    
-				    for(int temp_column=0; temp_column<g.getNumCols(); temp_column++) {
-						for(int temp_row=0; temp_row<g.getNumRows(); temp_row++) {	
 				    
-						    threeInARow(column, row, temp_column, temp_row, three_unblockable, three_blockable);		//checks to see if three out of four can be created
-						    
-						    if(row==0 || (row>0 && getState[column][row-1]!=0)) {
-						    	
-						    	numberTouching(column, row);    //checks to see how many filled squares each potential move creates
-							    
-
-						    	if(!already_winning_column) {
-						    		startTime = System.currentTimeMillis();
-						    		//winningColumnCreator(column, row, temp_column, temp_row, ai_winning_moves, opp_winning_moves, trial_four_map);
-						    		endTime += System.currentTimeMillis()-startTime;
-							    	if(!opp_turn && !winning_column.contains(column)) {
-							    		//losingBoardCreator(column, row, temp_column, temp_row, ai_winning_creator, opp_winning_creator);
-							    		
-						    		}
-						    	}
-							}
- 
-						}
-				    }
+				    threeInARow(column, row);		//checks to see if three out of four can be created
 				    
-				    if((row>0 && getState[column][row-1] != 0)||row==0) {
-				    	if((getState[column][row]==1 && g.isRedTurn() || getState[column][row]==-1 && !g.isRedTurn())) { 
-				    		AI_three_unblockable.addAll(three_unblockable);
-				    		AI_three_blockable.addAll(three_blockable);
+				    if(row==0 || (row>0 && getState[column][row-1]!=0)) {
+				    	
+				    	numberTouching(column, row);    //checks to see how many filled squares each potential move creates
+				    				    
+				    	if(!already_winning_column) {
+				    		startTime = System.currentTimeMillis();
+				    		winningColumnCreator(column, row, simulated_four_map);
+					    	endTime += System.currentTimeMillis()-startTime;
 				    	}
-				    
-				    	else if(((getState[column][row]==-1 && g.isRedTurn() || getState[column][row]==1 && !g.isRedTurn()))) { 
-				    		opposing_three_unblockable.addAll(three_unblockable);
-				    		opposing_three_blockable.addAll(three_blockable);
+					    	
+				    	if(!opp_turn) {
+					    	losingBoardCreator(column, row);	
 				    	}
-				    }
-				    
-				    for(int num=0; num<g.getNumCols(); num++){
-						if(!winning_column.contains(column) && (ai_winning_moves.containsKey(num) && ai_winning_moves.get(num)>1) 
-						   || (opp_winning_moves.containsKey(num) && opp_winning_moves.get(num)>1)) { 
-							winning_column.add(num);
-						}
-					}
-				    
-				    for(int col_num=0; col_num<g.getNumCols(); col_num++){
-						if((!ai_winning_creator.isEmpty() && ai_winning_creator.containsKey(col_num) && ai_winning_creator.get(col_num)>1) 
-						    || (!opp_winning_creator.isEmpty() && opp_winning_creator.containsKey(col_num) && opp_winning_creator.get(col_num)>1)) { 
-						
-
-							if(!loss_creator.contains(col_num)) {
-								loss_creator.add(col_num);
-							}
-						}
+				    	
 					}
 					
 					getState[column][row] = 0;
@@ -149,8 +109,6 @@ public class JackMaloonAI implements CFPlayer{
 		public int findWinningColumn() {
 			
 			four_potential_map = fourMap();
-	
-			
 			boolean opponent_can_win = false;
 			int num_squares = g.getNumCols();
 			ArrayList<Integer> losing_columns = new ArrayList<>();
@@ -167,9 +125,9 @@ public class JackMaloonAI implements CFPlayer{
 					}
 					
 					if((j==1 && getState[i][j-1]==0) ||(j>1 && getState[i][j-1]==0 && getState[i][j-2]!=0)) {  //checks to see whether a move 2 moves from now can win, and avoids it
-				    	if((getState[i][j]==1 && g.isRedTurn() || getState[i][j]==-1 && !g.isRedTurn())) 
+				    	if((four_potential_map[i][j]==1 && g.isRedTurn() || four_potential_map[i][j]==-1 && !g.isRedTurn())) 
 				    		unwise_moves.add(i);
-						else if(((getState[i][j]==-1 && g.isRedTurn() || getState[i][j]==1 && !g.isRedTurn()))) 
+						else if(four_potential_map[i][j]==2 || (four_potential_map[i][j]==-1 && g.isRedTurn() || four_potential_map[i][j]==1 && !g.isRedTurn())) 
 							losing_moves.add(i);						
 					}
 					
@@ -204,7 +162,7 @@ public class JackMaloonAI implements CFPlayer{
 			
 			return(-1);
 		}
-	
+		
 		public int[][] fourMap() {	//sees whether there is a winning move
 			
 			int[] move_types = {-1,1};
@@ -566,259 +524,316 @@ public class JackMaloonAI implements CFPlayer{
 			}  
 		}
 		
-		public void winningColumnCreator(int column, int row, int i, int j, HashMap<Integer, Integer> ai_winning_moves, HashMap<Integer, Integer> opp_winning_moves, int[][] four_map) {
+		public void winningColumnCreator(int column, int row, int[][] four_map) {
 			
 			future_winning_move = -1;
-			q++;
-			//System.out.println("q: " + q);
+			HashMap<Integer, Integer> opp_winning_moves = new HashMap<>();
+			HashMap<Integer, Integer> ai_winning_moves = new HashMap<>();
 
-			if(j<g.getNumRows()-1 && four_map[i][j]!=0 && four_map[i][j+1]!=0 && (four_map[i][j]==four_map[i][j+1] ||  four_map[i][j+1]==2)) {
-				
-				if(!winning_column.contains(column))
-					winning_column.add(column);
-			}	
-			if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
-				//System.out.println("");
-				//System.out.println("aicol " + column);
-				//System.out.println("airow " + row);
-				
-				if(!ai_winning_moves.containsKey(column))
-					ai_winning_moves.put(column, 1);
-				else {
-					int count = ai_winning_moves.get(column);
-					ai_winning_moves.put(column, count+1);
-				}
+
+			for(int i=0; i<g.getNumCols(); i++) {
+				for(int j=0; j<g.getNumRows()-1; j++) {
+					
+					q++;
+					//System.out.println("q: " + q);
+					if(four_map[i][j]!=0 && four_map[i][j+1]!=0 && (four_map[i][j]==four_map[i][j+1] ||  four_map[i][j+1]==2)) {
+						
+						if(!winning_column.contains(column))
+							winning_column.add(column);
+					}	
+					if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
+						//System.out.println("");
+						//System.out.println("aicol " + column);
+						//System.out.println("airow " + row);
+						
+						if(!ai_winning_moves.containsKey(column))
+							ai_winning_moves.put(column, 1);
+						else {
+							int count = ai_winning_moves.get(column);
+							ai_winning_moves.put(column, count+1);
+						}
+					}
+					else if(four_map[i][j]==opponent_color && (j==0 || getState[i][j-1]!=0)) {
+						//System.out.println("");
+						//System.out.println("oppcol " + column);
+						//System.out.println("opprow " + row);
+						
+						if(!opp_winning_moves.containsKey(column))
+							opp_winning_moves.put(column, 1);
+						else {
+							int count = opp_winning_moves.get(column);
+							opp_winning_moves.put(column, count+1);
+						}
+					}			
+				}					    
 			}
-			else if(four_map[i][j]==opponent_color && (j==0 || getState[i][j-1]!=0)) {
-				//System.out.println("");
-				//System.out.println("oppcol " + column);
-				//System.out.println("opprow " + row);
-				
-				if(!opp_winning_moves.containsKey(column))
-					opp_winning_moves.put(column, 1);
-				else {
-					int count = opp_winning_moves.get(column);
-					opp_winning_moves.put(column, count+1);
+			
+			for(int num=0; num<g.getNumCols(); num++){
+				if(!winning_column.contains(column) && (ai_winning_moves.containsKey(num) && ai_winning_moves.get(num)>1) || (opp_winning_moves.containsKey(num) && opp_winning_moves.get(num)>1)) { 
+					winning_column.add(num);
+					//System.out.println("sdefihedfhweifhiefh");
 				}
 			}			
-			
-						
 		}
 		
-		public void losingBoardCreator(int column, int row, int i, int j, HashMap<Integer, Integer> ai_winning_creator, HashMap<Integer, Integer> opp_winning_creator){
+		public void losingBoardCreator(int column, int row){
 			
 			future_winning_move = -1;
-
-			
+			HashMap<Integer, Integer> opp_winning_creator = new HashMap<>();
+			HashMap<Integer, Integer> ai_winning_creator = new HashMap<>();
 			int[][] four_map;
 			int[] arr = {-1,1};
 
-
-			if(j<g.getNumRows()-1 && getState[i][j]==0 && (j==0||getState[i][j-1]!=0) && !winning_column.contains(i)) {
-				opp_winning_creator = new HashMap<>();
-				ai_winning_creator = new HashMap<>();
-				
-				getState[i][j] = opponent_color;
-				four_map = fourMap();
-	
-				
-				for(int c=0; c<g.getNumCols(); c++) {
-					for(int r=0; r<g.getNumRows()-1; r++) {
+			for(int c=0; c<g.getNumCols(); c++) {
+				for(int r=0; r<g.getNumRows(); r++) {
+					if(getState[c][r]==0 && (r==0||getState[c][r-1]!=0)) {
+						opp_winning_creator = new HashMap<>();
+						ai_winning_creator = new HashMap<>();
 						
-						if(four_map[c][r]!=0 && four_map[c][r+1]!=0 && (four_map[c][r]==four_map[c][r+1] ||  four_map[c][r+1]==2)
-						   && !loss_creator.contains(column) && (four_map[c][r]==opponent_color || four_map[c][r+1]==opponent_color))
-								loss_creator.add(column);
+						getState[c][r] = opponent_color;
+						four_map = fourMap();
 						
 						/*
+						System.out.println("four map");
+						for(int cc=5; cc>=0; cc--) {
+							for(int rr=0; rr<7; rr++) {
+								
+								if(four_potential_map[rr][cc]==-1)
+									System.out.print(" " + four_potential_map[rr][cc]);
+								else
+									System.out.print( "  " + four_potential_map[rr][cc]);
+							}
+							System.out.println("");
+						}
+						System.out.println("");
 						
-						if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
-							//System.out.println("");
-							//System.out.println("aicol " + column);
-							//System.out.println("airow " + row);
-							
-							if(!ai_winning_creator.containsKey(column))
-								ai_winning_creator.put(column, 1);
-							else {
-								int count = ai_winning_creator.get(column);
-								ai_winning_creator.put(column, count+1);
+						*/
+						for(int i=0; i<g.getNumCols(); i++) {
+							for(int j=0; j<g.getNumRows()-1; j++) {
+								
+								if(four_map[i][j]!=0 && four_map[i][j+1]!=0 && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2)
+								   && !loss_creator.contains(column) && (four_map[i][j]==opponent_color || four_map[i][j+1]==opponent_color))
+										loss_creator.add(column);
+								
+								/*
+								
+								if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
+									//System.out.println("");
+									//System.out.println("aicol " + column);
+									//System.out.println("airow " + row);
+									
+									if(!ai_winning_creator.containsKey(column))
+										ai_winning_creator.put(column, 1);
+									else {
+										int count = ai_winning_creator.get(column);
+										ai_winning_creator.put(column, count+1);
+									}
+								}
+								*/
+								
+								if(four_map[i][j]==opponent_color && (j==0 || getState[i][j-1]!=0)) {
+									
+									if(!opp_winning_creator.containsKey(column))
+										opp_winning_creator.put(column, 1);
+									else {
+										int count = opp_winning_creator.get(column);
+										opp_winning_creator.put(column, count+1);
+									}
+								}	
 							}
 						}
-						*/
-						if(four_map[c][r]==opponent_color && (r==0 || getState[c][r-1]!=0)) {
-							//System.out.println("");
-							//System.out.println("oppcol " + column);
-							//System.out.println("opprow " + row);
-							
-							if(!opp_winning_creator.containsKey(column))
-								opp_winning_creator.put(column, 1);
-							else {
-								int count = opp_winning_creator.get(column);
-								opp_winning_creator.put(column, count+1);
+						getState[c][r] = 0;
+					
+
+						for(int col_num=0; col_num<g.getNumCols(); col_num++){
+							if((!ai_winning_creator.isEmpty() && ai_winning_creator.containsKey(col_num) && ai_winning_creator.get(col_num)>1) 
+							    || (!opp_winning_creator.isEmpty() && opp_winning_creator.containsKey(col_num) && opp_winning_creator.get(col_num)>1)) { 
+								
+								if(!loss_creator.contains(col_num)) {
+									loss_creator.add(col_num);
+
+								}
 							}
-						}	
+						}
 					}
-					getState[i][j] = 0;
+					
 				}
-				
 			}
 		}
 		
-		public void threeInARow(int column, int row, int i, int j, ArrayList<Integer> three_unblockable, ArrayList<Integer> three_blockable) {	      //sees whether there is an opportunity to make three in a row or block opponent from doing so
+		public void threeInARow(int column, int row) {	      //sees whether there is an opportunity to make three in a row or block opponent from doing so
 			  
-			if(getState[i][j]!=0 && j<g.getNumRows()-3 && i==column && (j+2==row) && getState[i][j]==getState[i][j+1]    //looks for three vertically
-			   && getState[i][j]==getState[i][j+2] && getState[i][j+3]==0) {
-				
-				three_blockable.add(column);
-				
-				if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-			}
+			ArrayList<Integer> three_unblockable = new ArrayList<>();    ////arraylist thats hold columns that make three in a row that aren't blockable
+			ArrayList<Integer> three_blockable = new ArrayList<>();    ////arraylist thats hold columns that make three in a row that are blockable
 			
-			if(getState[i][j]!=0 && i<g.getNumCols()-2 && (i==column || i+1==column || i+2==column) && j==row && getState[i][j]==getState[i+1][j]   //looks for three connected horizontally
-			   && getState[i][j]==getState[i+2][j] && (i<g.getNumCols()-3 && getState[i+3][j]==0 || i>0 && getState[i-1][j]==0)) {
-				
-				if(j>0 && i>0 && i<g.getNumCols()-3 && (getState[i-1][j-1]==0 || getState[i+3][j-1]==0)) {	
+			for(int i=0; i<g.getNumCols(); i++) {
+				for(int j=0;j<g.getNumRows(); j++) {
+					if(getState[i][j]!=0 && j<g.getNumRows()-3 && i==column && (j+2==row) && getState[i][j]==getState[i][j+1]    //looks for three vertically
+					   && getState[i][j]==getState[i][j+2] && getState[i][j+3]==0) {
+						
+						three_blockable.add(column);
+						
+						if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+					}
 					
-					if(getState[i-1][j-1]==0)
-						three_unblockable.add(column);
-					if(getState[i+3][j-1]==0) 		
-						three_unblockable.add(column);
-				}
-				else 
-					three_blockable.add(column);
-				
-				if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-		    }
-			
-			if(getState[i][j]!=0 && i<g.getNumCols()-3 && initial_four_map[i+1][j]!=getState[i][j] && initial_four_map[i+1][j]!=2 
-			   && (i==column || i+2==column || i+3==column) &&  j==row && getState[i][j]==getState[i+2][j]   //looks for three out of four horizontally with middle left empty
-			   && getState[i][j]==getState[i+3][j] && getState[i+1][j]==0) {		
-				
-				if(j>0 && getState[i+1][j-1]==0)
-					three_unblockable.add(column);
-				else 
-					three_blockable.add(column);						
+					if(getState[i][j]!=0 && i<g.getNumCols()-2 && (i==column || i+1==column || i+2==column) && j==row && getState[i][j]==getState[i+1][j]   //looks for three connected horizontally
+					   && getState[i][j]==getState[i+2][j] && (i<g.getNumCols()-3 && getState[i+3][j]==0 || i>0 && getState[i-1][j]==0)) {
+						
+						if(j>0 && i>0 && i<g.getNumCols()-3 && (getState[i-1][j-1]==0 || getState[i+3][j-1]==0)) {	
+							
+							if(getState[i-1][j-1]==0)
+								three_unblockable.add(column);
+							if(getState[i+3][j-1]==0) 		
+								three_unblockable.add(column);
+						}
+						else 
+							three_blockable.add(column);
+						
+						if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+				    }
+					
+					if(getState[i][j]!=0 && i<g.getNumCols()-3 && initial_four_map[i+1][j]!=getState[i][j] && initial_four_map[i+1][j]!=2 && (i==column || i+2==column || i+3==column) &&  j==row && getState[i][j]==getState[i+2][j]   //looks for three out of four horizontally with middle left empty
+					   && getState[i][j]==getState[i+3][j] && getState[i+1][j]==0) {		
+						
+						if(j>0 && getState[i+1][j-1]==0)
+							three_unblockable.add(column);
+						else 
+							three_blockable.add(column);						
 
-				if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-			}
-			
-			if(getState[i][j]!=0 && i<g.getNumCols()-3 && initial_four_map[i+2][j]!=getState[i][j] && initial_four_map[i+2][j]!=2 
-			   && (i==column || i+1==column || i+3==column) && j==row && getState[i][j]==getState[i+1][j] 
-			   && getState[i][j]==getState[i+3][j] && getState[i+2][j]==0) {    //looks for three out of four horizontally with middle right empty
-				
-				if(j>0 && getState[i+2][j-1]==0) 
-					three_unblockable.add(column);
-				else 
-					three_blockable.add(column);
-				
-				if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-			}
-
-		    if(getState[i][j]!=0 && i<g.getNumCols()-2 && j<g.getNumRows()-2 && (i==column && j==row || i+1==column && j+1==row || i+2==column && j+2==row)  //looks for three in a row in upper right diagonal
-		       && getState[i][j]==getState[i+1][j+1] && getState[i][j]==getState[i+2][j+2] && (j<g.getNumRows()-3 &&  i<g.getNumCols()-3 
-		       && getState[i+3][j+3]==0 || j>1 && i>1 && getState[i-1][j-1]==0)) {   
-		    	
-		    	if((i<g.getNumCols()-3 && j<g.getNumRows()-3 && getState[i+3][j+2]==0) || (j==2 && i<g.getNumCols()-3 
-		    		&& ((i>0 && getState[i-1][j-2]==0) || getState[i+3][j+2]==0)) || (i==g.getNumCols()-3 && j>1 && getState[i-1][j-2]==0) 
-		    		|| (j==g.getNumRows()-3 && getState[i-1][j-2]==0)) 
-		    		
-		    		three_unblockable.add(column);
-		    	else 
-		    		three_blockable.add(column);
-		    	
-		    	if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-		    }
-		    
-		    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j<g.getNumRows()-3 && initial_four_map[i+1][j+1]!=getState[i][j] && initial_four_map[i+1][j+1]!=2   //looks for 3/4 diagonally middle left empty
-		    		&& (i==column && j==row || i+2==column && j+2==row || i+3==column && j+3==row)&& getState[i][j]==getState[i+2][j+2] && getState[i][j]==getState[i+3][j+3] && getState[i+1][j+1]==0) {   
-		    	
-		    	if(getState[i+1][j]==0)
-		    		three_unblockable.add(column);
-		    	else 
-		    		three_blockable.add(column);
-		    	
-		    	if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-		    }
-		    
-		    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j<g.getNumRows()-3 && initial_four_map[i+2][j+2]!=getState[i][j] && initial_four_map[i+2][j+2]!=2   //looks for 3/4 diagonally middle right empty
-		       && (i==column && j==row || i+1==column && j+1==row || i+3==column && j+3==row) && getState[i][j]==getState[i+1][j+1] && getState[i][j]==getState[i+3][j+3] && getState[i+2][j+2]==0) {
-		    	
-		    	if(getState[i+2][j+1]==0) 
-		    		three_unblockable.add(column);
-		    	else 
-		    		three_blockable.add(column);
-		    	
-		    	if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-		    }
-		    
-		    if(getState[i][j]!=0 && i<g.getNumCols()-2 && j>=2 && (i==column && j==row || i+1==column && j-1==row || i+2==column && j-2==row) 
-		       && getState[i][j]==getState[i+1][j-1] && getState[i][j]==getState[i+2][j-2] && (i>1 && j<g.getNumRows()-1 
-		       && getState[i-1][j+1]==0 || i<g.getNumCols()-3 && j>2 && getState[i+3][j-3]==0)) {   //looks for three in a row in lower right diagonal
-		    	
-		    	if(((j==3 || j==2) && i>0 && getState[i-1][j]==0) || (i>0 && i<g.getNumCols()-3 && j==4 && (getState[i-1][j]==0 || getState[i+3][j-4]==0)) 
-		    		|| (i==0 && j>3 && getState[i+3][j-4]==0) || (j==g.getNumCols()-1 && getState[i+3][j-4]==0)) 
-		    		
-		    		three_unblockable.add(column);
-		    	else 
-		    		three_blockable.add(column);
-		    	
-		    	if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-		    }
-		    
-		    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j>2 && initial_four_map[i+1][j-1]!=getState[i][j] && initial_four_map[i+1][j-1]!=2   //looks for 3/4 diagonally middle left empty
-		       && (i==column && j==row || i+2==column && j-2==row || i+3==column && j-3==row) && getState[i][j]==getState[i+2][j-2] && getState[i][j]==getState[i+3][j-3] && getState[i+1][j-1]==0) {  
-		    	
-		    	if(getState[i+1][j-2]==0) 
-		    		three_unblockable.add(column);
-		    	else 
-		    		three_blockable.add(column);
-		    	
-		    	if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-		    }
-		    
-		    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j>2 && initial_four_map[i+2][j-2]!=getState[i][j] && initial_four_map[i+2][j-2]!=2   //looks for 3/4 diagonally middle right empty
-		       && (i==column && j==row || i+1==column && j-1==row || i+3==column && j-3==row) && getState[i][j]==getState[i+1][j-1] && getState[i][j]==getState[i+3][j-3] && getState[i+2][j-2]==0) {  
-		    	
-		    	if(getState[i+2][j-3]==0) 
-		    		three_unblockable.add(column);
-		    	else 
-		    		three_blockable.add(column);
-		    	
-		    	if(three_potential_map[column][row]==0)
-					three_potential_map[column][row] = getState[i][j];
-				else if(three_potential_map[column][row]!=getState[i][j])
-					three_potential_map[column][row] = 2;
-		    }
+						if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+					}
+					
+					if(getState[i][j]!=0 && i<g.getNumCols()-3 && initial_four_map[i+2][j]!=getState[i][j] && initial_four_map[i+2][j]!=2 && (i==column || i+1==column || i+3==column) && j==row && getState[i][j]==getState[i+1][j] 
+					   && getState[i][j]==getState[i+3][j] && getState[i+2][j]==0) {    //looks for three out of four horizontally with middle right empty
+						
+						if(j>0 && getState[i+2][j-1]==0) 
+							three_unblockable.add(column);
+						else 
+							three_blockable.add(column);
+						
+						if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+					}
 	
+				    if(getState[i][j]!=0 && i<g.getNumCols()-2 && j<g.getNumRows()-2 && (i==column && j==row || i+1==column && j+1==row || i+2==column && j+2==row)  //looks for three in a row in upper right diagonal
+				       && getState[i][j]==getState[i+1][j+1] && getState[i][j]==getState[i+2][j+2] && (j<g.getNumRows()-3 &&  i<g.getNumCols()-3 
+				       && getState[i+3][j+3]==0 || j>1 && i>1 && getState[i-1][j-1]==0)) {   
+				    	
+				    	if((i<g.getNumCols()-3 && j<g.getNumRows()-3 && getState[i+3][j+2]==0) || (j==2 && i<g.getNumCols()-3 
+				    		&& ((i>0 && getState[i-1][j-2]==0) || getState[i+3][j+2]==0)) || (i==g.getNumCols()-3 && j>1 && getState[i-1][j-2]==0) 
+				    		|| (j==g.getNumRows()-3 && getState[i-1][j-2]==0)) 
+				    		
+				    		three_unblockable.add(column);
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j<g.getNumRows()-3 && initial_four_map[i+1][j+1]!=getState[i][j] && initial_four_map[i+1][j+1]!=2   //looks for 3/4 diagonally middle left empty
+				    		&& (i==column && j==row || i+2==column && j+2==row || i+3==column && j+3==row)&& getState[i][j]==getState[i+2][j+2] && getState[i][j]==getState[i+3][j+3] && getState[i+1][j+1]==0) {   
+				    	
+				    	if(getState[i+1][j]==0)
+				    		three_unblockable.add(column);
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j<g.getNumRows()-3 && initial_four_map[i+2][j+2]!=getState[i][j] && initial_four_map[i+2][j+2]!=2   //looks for 3/4 diagonally middle right empty
+				       && (i==column && j==row || i+1==column && j+1==row || i+3==column && j+3==row) && getState[i][j]==getState[i+1][j+1] && getState[i][j]==getState[i+3][j+3] && getState[i+2][j+2]==0) {
+				    	
+				    	if(getState[i+2][j+1]==0) 
+				    		three_unblockable.add(column);
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-2 && j>=2 && (i==column && j==row || i+1==column && j-1==row || i+2==column && j-2==row) 
+				       && getState[i][j]==getState[i+1][j-1] && getState[i][j]==getState[i+2][j-2] && (i>1 && j<g.getNumRows()-1 
+				       && getState[i-1][j+1]==0 || i<g.getNumCols()-3 && j>2 && getState[i+3][j-3]==0)) {   //looks for three in a row in lower right diagonal
+				    	
+				    	if(((j==3 || j==2) && i>0 && getState[i-1][j]==0) || (i>0 && i<g.getNumCols()-3 && j==4 && (getState[i-1][j]==0 || getState[i+3][j-4]==0)) 
+				    		|| (i==0 && j>3 && getState[i+3][j-4]==0) || (j==g.getNumCols()-1 && getState[i+3][j-4]==0)) 
+				    		
+				    		three_unblockable.add(column);
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j>2 && initial_four_map[i+1][j-1]!=getState[i][j] && initial_four_map[i+1][j-1]!=2   //looks for 3/4 diagonally middle left empty
+				       && (i==column && j==row || i+2==column && j-2==row || i+3==column && j-3==row) && getState[i][j]==getState[i+2][j-2] && getState[i][j]==getState[i+3][j-3] && getState[i+1][j-1]==0) {  
+				    	
+				    	if(getState[i+1][j-2]==0) 
+				    		three_unblockable.add(column);
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j>2 && initial_four_map[i+2][j-2]!=getState[i][j] && initial_four_map[i+2][j-2]!=2   //looks for 3/4 diagonally middle right empty
+				       && (i==column && j==row || i+1==column && j-1==row || i+3==column && j-3==row) && getState[i][j]==getState[i+1][j-1] && getState[i][j]==getState[i+3][j-3] && getState[i+2][j-2]==0) {  
+				    	
+				    	if(getState[i+2][j-3]==0) 
+				    		three_unblockable.add(column);
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_potential_map[column][row]==0)
+							three_potential_map[column][row] = getState[i][j];
+						else if(three_potential_map[column][row]!=getState[i][j])
+							three_potential_map[column][row] = 2;
+				    }
+			    }  
+			}
+		
+			if((row>0 && getState[column][row-1] != 0)||row==0) {
+		    	if((getState[column][row]==1 && g.isRedTurn() || getState[column][row]==-1 && !g.isRedTurn())) { 
+		    		AI_three_unblockable.addAll(three_unblockable);
+		    		AI_three_blockable.addAll(three_blockable);
+		    	}
+		    
+		    	else if(((getState[column][row]==-1 && g.isRedTurn() || getState[column][row]==1 && !g.isRedTurn()))) { 
+		    		opposing_three_unblockable.addAll(three_unblockable);
+		    		opposing_three_blockable.addAll(three_blockable);
+		    	}
+		    }	
 		}
 		
 		public void numberTouching(int column, int row) {	//counts number of filled squares are adjacent to simulated move
+			
 			num_touching = 0;
 			
 			if(row == 0) {
@@ -936,12 +951,9 @@ public class JackMaloonAI implements CFPlayer{
 		}
 	}
 	
-	public int nextMove(CFGame g) {			//plays the next move with sound logic
+	public int columnQuality(CFGame g, moveFinder m, boolean print, ArrayList good_columns, ArrayList bad_columns) {			//plays the next move with sound logic
 		
-		moveFinder m = new moveFinder(g);
 		int index = m.findWinningColumn();   //function that finds winning moves, moves to avoid losing, and also columns that are winnable
-		//System.out.println("index " + index);
-		
 		
 		int[] quality_array = {0,1,3,7,3,1,0}; 		//Assigning starting values to quality array that skew towards the center. This array will  determine which col to play
 
@@ -961,11 +973,85 @@ public class JackMaloonAI implements CFPlayer{
 			}
 			 //System.out.println("TTTime " + m.endTime);
 
-
+		if(print) {
+			System.out.println("losing moves " + m.losing_moves);
+			System.out.println("unwise moves " + m.unwise_moves);
+			System.out.println("illegal moves " + m.illegal_moves);
+			System.out.println("three_preventable " + m.three_preventer);
+			System.out.println("ai  unblockable " + m.AI_three_unblockable);
+			System.out.println("opp unblockable " + m.opposing_three_unblockable);
+			System.out.println("ai blockable " + m.AI_three_blockable);
+			System.out.println("opp blockable " + m.opposing_three_blockable);
+			System.out.println("winning column " +m.winning_column);
+			System.out.println("loss avoider " + m.loss_avoider);
+			System.out.println("loss creator " + m.loss_creator);
 			
-			return max_element_array(quality_array, m.illegal_moves, m.losing_moves, m.unwise_moves, m.loss_avoider, m.loss_creator, m.AI_three_unblockable, 
-					        		 m.opposing_three_unblockable, m.AI_three_blockable, m.opposing_three_blockable, m.winning_column, m.three_preventer, m.four_potential_map);
 		}
+		
+		m.winning_column.addAll(good_columns);
+		m.losing_moves.addAll(bad_columns);
+		
+			
+		return max_element_array(quality_array, m.illegal_moves, m.losing_moves, m.unwise_moves, m.loss_avoider, m.loss_creator, m.AI_three_unblockable, 
+				        		 m.opposing_three_unblockable, m.AI_three_blockable, m.opposing_three_blockable, m.winning_column, m.three_preventer, m.four_potential_map);
+		}
+	}
+	
+	public int nextMove(CFGame g) {
+		
+		moveFinder m = new moveFinder(g);
+		ArrayList<Integer> moves_played = new ArrayList<>();
+		ArrayList<Integer> good_columns = new ArrayList<>();
+		ArrayList<Integer> bad_columns = new ArrayList<>();
+		int ai_num = -1;
+		int index;
+		System.out.println("red turn " + g.isRedTurn());
+		
+		for(int col=0; col<g.getNumCols(); col++) { 
+			if(g.notFullColumn(col)) {
+				g.play(col);
+				if(!g.isRedTurn())
+					ai_num = 1;
+			}
+			
+			for(int sim_move=0; sim_move<6; sim_move++) {
+				index = columnQuality(g, new moveFinder(g), false, new ArrayList(), new ArrayList());
+				g.play(index);
+				/*
+				for(int i = 5;i>=0;i--) {
+					for(int j = 0;j<g.getNumCols();j++) {
+						int[][] x = g.getState();
+						if(x[j][i] == -1)
+							System.out.print(" " + x[j][i]);
+						else
+							System.out.print( "  " + x[j][i]);
+					}
+					System.out.println("");
+				}
+				System.out.println("");	
+				*/
+				moves_played.add(index);
+				
+				if(g.isGameOver()) {
+					System.out.println("winner");
+					if(g.isRedTurn() &&  ai_num==-1 || !g.isRedTurn() && ai_num==1) {
+						good_columns.add(col);
+					}
+					if(g.isRedTurn() &&  ai_num==1 || !g.isRedTurn() && ai_num==-1) {
+						bad_columns.add(col);
+					}
+					break;
+				}
+			}
+			
+			for(int num:moves_played)
+				g.unplay(num);
+			
+			moves_played.clear();
+			g.unplay(col);
+		}
+		System.out.println("red turn " + g.isRedTurn());
+		return(columnQuality(g, new moveFinder(g), true, good_columns, bad_columns));
 	}
 	
 	public int max_element_array(int[] quality_arr, ArrayList<Integer> illegal_moves, ArrayList<Integer> losing_moves, ArrayList<Integer> unwise_moves, ArrayList<Integer> loss_avoider, 
@@ -975,17 +1061,8 @@ public class JackMaloonAI implements CFPlayer{
 		int max = -1000000;
 		int max_element = 0;
 		
-		//System.out.println("losing moves " + losing_moves);
-		//System.out.println("unwise moves " + unwise_moves);
-		//System.out.println("illegal moves " + illegal_moves);
-		//System.out.println("three_preventable " + three_preventable);
-		//System.out.println("ai  unblockable " + AI_three_unblockable);
-		//System.out.println("opp unblockable " + opposing_three_unblockable);
-		//System.out.println("ai blockable " + AI_three_blockable);
-		//System.out.println("opp blockable " + opposing_three_blockable);
-		//System.out.println("winning column " + winning_column);
-		//System.out.println("loss avoider " + loss_avoider);
-		//System.out.println("loss creator " + loss_creator);
+		
+		
 		int illegal = -10000;
 		int losing = -1000;
 		int unwise = -150;
@@ -1083,7 +1160,7 @@ public class JackMaloonAI implements CFPlayer{
 
 	public String getName() {
 		
-		return "Jack Maloon's AI";
+		return "Jack Maloon AI";
 	}
 	
 }

@@ -1,11 +1,15 @@
-package hw4;
+
 import java.util.Random;
 import java.util.Scanner;
 
 public class ConsoleCF extends CFGame{
 	
 	private boolean ai1First = false;
-	private boolean isHumanPlaying = false;
+	private boolean AIvsAI = false;
+	private boolean humanvsAI = false;
+	private boolean gameChecker = false;
+	private int[] game_moves;
+	private int move_number = 0;
 	HumanPlayer hp;
 	CFPlayer ai1;
 	CFPlayer ai2;
@@ -15,7 +19,7 @@ public class ConsoleCF extends CFGame{
 		Random rand = new Random();
 		ai1 = ai;
 		hp = new HumanPlayer();
-		isHumanPlaying = true;
+		humanvsAI = true;
 		
 		if(rand.nextInt(2) == 0) {		//randomizes who starts
 			ai1First = true;
@@ -25,6 +29,7 @@ public class ConsoleCF extends CFGame{
 	public ConsoleCF (CFPlayer ai1, CFPlayer ai2) { 		//sets up ai vs. ai game
 		
 		Random rand = new Random();
+		AIvsAI = true;
 		this.ai1 = ai1;
 		this.ai2 = ai2;
 		
@@ -33,31 +38,50 @@ public class ConsoleCF extends CFGame{
 		}
 	}
 	
+	public ConsoleCF (CFPlayer ai, int[] game_moves, boolean aiStarts) {		//sets up human vs. ai game
+		
+		Random rand = new Random();
+		this.game_moves = game_moves;
+		gameChecker = true;
+		ai1 = ai;
+		
+		if(aiStarts) {		//randomizes who starts
+			ai1First = true;
+		}
+	}
+	
 	public void playOut () {		//plays game until it is over
 
-		if(ai1First == true) 			
+		if(ai1First) 			
 			play(ai1.nextMove(this));
 		
 		while(!isGameOver()) {
 			
-			if(!isHumanPlaying) {
-				
+			if(AIvsAI) {
 				play(ai2.nextMove(this));
-
-				if(!isGameOver());
+				boardPrint();
+				if(!isGameOver()) {
 					play(ai1.nextMove(this));
+					boardPrint();
+				}
 			
 			}
 
-			if(isHumanPlaying) {
-
+			else if(humanvsAI) {
 				boardPrint();			//prints board to human player
-				play(hp.nextMove(this));
+				play(hp.nextMove(this)-1);
 				
 				if(!isGameOver())
 					play(ai1.nextMove(this));
 				if(isGameOver())
 					boardPrint();	
+			}
+			
+			else if(gameChecker) {
+				ai1.nextMove(this);
+				play(game_moves[move_number]);
+				boardPrint();
+				move_number++;	
 			}
 		}
 		
@@ -67,14 +91,15 @@ public class ConsoleCF extends CFGame{
 		
 		HumanPlayer hp = new HumanPlayer();
 		
-		if(!isHumanPlaying) {
-			
+		if(AIvsAI) {
 			if(!isWinner())
 				return "Draw";
-			else if(!isRedTurn() && ai1First || isRedTurn() && !ai1First)
+			else if(!isRedTurn() && ai1First || isRedTurn() && !ai1First) { 
 				return ai1.getName();
-			else
+			}
+			else {
 				return ai2.getName();
+			}
 		}
 		else {
 			
