@@ -21,6 +21,7 @@ public class JackMaloonAI implements CFPlayer{
 		private ArrayList<Integer> loss_creator = new ArrayList<>();
 		private ArrayList<Integer> three_preventer = new ArrayList<>();
 		private ArrayList<Integer> winning_column= new ArrayList<>();
+		private ArrayList<Integer> bad_position = new ArrayList<>();
 		private int future_winning_move;
 		private int[][] three_potential_map;
 		private int[][] four_potential_map;
@@ -51,6 +52,8 @@ public class JackMaloonAI implements CFPlayer{
 				  } 
 			}
 		}
+		
+		
 		
 		public boolean pretendPlay(int column, boolean opp_turn) {				//simulates playing specific column. opp_turn true if opponents turn
 			
@@ -537,7 +540,6 @@ public class JackMaloonAI implements CFPlayer{
 					q++;
 					//System.out.println("q: " + q);
 					if(four_map[i][j]!=0 && four_map[i][j+1]!=0 && (four_map[i][j]==four_map[i][j+1] ||  four_map[i][j+1]==2)) {
-						
 						if(!winning_column.contains(column))
 							winning_column.add(column);
 					}	
@@ -612,8 +614,15 @@ public class JackMaloonAI implements CFPlayer{
 							for(int j=0; j<g.getNumRows()-1; j++) {
 								
 								if(four_map[i][j]!=0 && four_map[i][j+1]!=0 && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2)
-								   && !loss_creator.contains(column) && (four_map[i][j]==opponent_color || four_map[i][j+1]==opponent_color))
-										loss_creator.add(column);
+								   && !loss_creator.contains(column) && (four_map[i][j]==opponent_color || four_map[i][j+1]==opponent_color)) {
+										
+									loss_creator.add(column);
+							}
+								
+								if(four_map[i][j]==2 && four_map[i][j+1]==opponent_color && !unwise_moves.contains(column)) {
+									
+									unwise_moves.add(column);
+								}
 								
 								/*
 								
@@ -943,15 +952,35 @@ public class JackMaloonAI implements CFPlayer{
 		public void avoidAllowingThree() {
 			
 			for(int i=0; i<g.getNumCols(); i++) {
-				for(int j=0;j<g.getNumRows(); j++) {
-					  if(!three_preventer.contains(i) && three_potential_map[i][j]!=0 && ((j>1 && getState[i][j-1]==0 && getState[i][j-2] != 0) || (j==1 && getState[i][j-1]==0)))
-						  	three_preventer.add(i);
+				for(int j=1;j<g.getNumRows(); j++) {
+					if(!three_preventer.contains(i) && three_potential_map[i][j]!=0 && ((j>1 && getState[i][j-1]==0 && getState[i][j-2] != 0) || (j==1 && getState[i][j-1]==0))) {
+					  	three_preventer.add(i);
+					  	System.out.println("i " + i);
+					  	System.out.println("j " + j);
+					  	System.out.println(three_potential_map[i][j]);
+					  	System.out.println(getState[i][j-1]);
+					  	
+					}
+					if(!bad_position.contains(i) && i<g.getNumCols()-3 && (three_potential_map[i][j]==opponent_color || three_potential_map[i][j]==2)
+					   && (three_potential_map[i+3][j]==opponent_color || three_potential_map[i+3][j]==2)
+					   && ((j>1 && getState[i][j-1]==0 && getState[i][j-2] != 0) || (j==1 && getState[i][j-1]==0)) 
+			           && getState[i+1][j]==opponent_color && getState[i+2][j]==opponent_color && getState[i+3][j-1]==0) {
+				  
+						bad_position.add(i);
+					}
+					if(!bad_position.contains(i+3) && i<g.getNumCols()-3 && (three_potential_map[i][j]==opponent_color || three_potential_map[i][j]==2)
+					   && (three_potential_map[i+3][j]==opponent_color || three_potential_map[i+3][j]==2)
+					   && ((j>1 && getState[i+3][j-1]==0 && getState[i+3][j-2] != 0) || (j==1 && getState[i+3][j-1]==0)) 
+					   && getState[i+1][j]==opponent_color && getState[i+2][j]==opponent_color && getState[i][j-1]==0) {
+						  
+						bad_position.add(i+3);
+					}
 				}
 			}
 		}
 	}
 	
-	public int columnQuality(CFGame g, moveFinder m, boolean print, ArrayList good_columns, ArrayList bad_columns) {			//plays the next move with sound logic
+	public int columnQuality(CFGame g, moveFinder m, boolean print, ArrayList good_sim_columns, ArrayList bad_sim_columns) {			//plays the next move with sound logic
 		
 		int index = m.findWinningColumn();   //function that finds winning moves, moves to avoid losing, and also columns that are winnable
 		
@@ -974,10 +1003,13 @@ public class JackMaloonAI implements CFPlayer{
 			 //System.out.println("TTTime " + m.endTime);
 
 		if(print) {
+			System.out.println("good sim columns " + good_sim_columns);
+			System.out.println("bad sim columns " + bad_sim_columns);
 			System.out.println("losing moves " + m.losing_moves);
 			System.out.println("unwise moves " + m.unwise_moves);
 			System.out.println("illegal moves " + m.illegal_moves);
 			System.out.println("three_preventable " + m.three_preventer);
+			System.out.println("bad position " + m.bad_position);
 			System.out.println("ai  unblockable " + m.AI_three_unblockable);
 			System.out.println("opp unblockable " + m.opposing_three_unblockable);
 			System.out.println("ai blockable " + m.AI_three_blockable);
@@ -988,12 +1020,10 @@ public class JackMaloonAI implements CFPlayer{
 			
 		}
 		
-		m.winning_column.addAll(good_columns);
-		m.losing_moves.addAll(bad_columns);
 		
 			
-		return max_element_array(quality_array, m.illegal_moves, m.losing_moves, m.unwise_moves, m.loss_avoider, m.loss_creator, m.AI_three_unblockable, 
-				        		 m.opposing_three_unblockable, m.AI_three_blockable, m.opposing_three_blockable, m.winning_column, m.three_preventer, m.four_potential_map);
+		return max_element_array(quality_array, good_sim_columns, bad_sim_columns, m.illegal_moves, m.losing_moves, m.unwise_moves, m.loss_avoider, m.loss_creator, m.AI_three_unblockable, 
+				        		 m.opposing_three_unblockable, m.AI_three_blockable, m.opposing_three_blockable, m.winning_column, m.three_preventer, m.bad_position, m.four_potential_map);
 		}
 	}
 	
@@ -1005,58 +1035,79 @@ public class JackMaloonAI implements CFPlayer{
 		ArrayList<Integer> bad_columns = new ArrayList<>();
 		int ai_num = -1;
 		int index;
-		System.out.println("red turn " + g.isRedTurn());
 		
-		for(int col=0; col<g.getNumCols(); col++) { 
-			if(g.notFullColumn(col)) {
-				g.play(col);
-				if(!g.isRedTurn())
-					ai_num = 1;
-			}
-			
-			for(int sim_move=0; sim_move<6; sim_move++) {
-				index = columnQuality(g, new moveFinder(g), false, new ArrayList(), new ArrayList());
-				g.play(index);
-				/*
-				for(int i = 5;i>=0;i--) {
-					for(int j = 0;j<g.getNumCols();j++) {
-						int[][] x = g.getState();
-						if(x[j][i] == -1)
-							System.out.print(" " + x[j][i]);
-						else
-							System.out.print( "  " + x[j][i]);
-					}
-					System.out.println("");
-				}
-				System.out.println("");	
-				*/
-				moves_played.add(index);
-				
-				if(g.isGameOver()) {
-					System.out.println("winner");
-					if(g.isRedTurn() &&  ai_num==-1 || !g.isRedTurn() && ai_num==1) {
-						good_columns.add(col);
-					}
-					if(g.isRedTurn() &&  ai_num==1 || !g.isRedTurn() && ai_num==-1) {
-						bad_columns.add(col);
-					}
-					break;
-				}
-			}
-			
-			for(int num:moves_played)
-				g.unplay(num);
-			
-			moves_played.clear();
-			g.unplay(col);
+		int win_finder = m.findWinningColumn();
+		
+		if(win_finder!=-1) {
+			return(win_finder);
 		}
-		System.out.println("red turn " + g.isRedTurn());
-		return(columnQuality(g, new moveFinder(g), true, good_columns, bad_columns));
+		else {
+			for(int col=0; col<g.getNumCols(); col++) { 
+				System.out.println(col + " not full column " + g.notFullColumn(col));
+				if(g.notFullColumn(col)) {
+					System.out.println("ggggggggggggggggggggggggggggggg " + m.getState[col][5]);
+					System.out.println("First playing move " + col);
+					System.out.println("");
+					g.play(col);
+					if(!g.isRedTurn())
+						ai_num = 1;
+				
+					if(!g.isGameOver()) {
+						for(int sim_move=0; sim_move<12; sim_move++) {
+							index = columnQuality(g, new moveFinder(g), false, new ArrayList(), new ArrayList());
+							g.play(index);
+							//System.out.println("move " + index);
+							//System.out.println("");
+							//System.out.println("");
+							moves_played.add(index);
+							
+							if(g.isGameOver()) {
+								if(g.isWinner()) {
+									System.out.println("game over");
+									for(int i = 5;i>=0;i--) {
+										for(int j = 0;j<g.getNumCols();j++) {
+											int[][] x = g.getState();
+											if(x[j][i] == -1)
+												System.out.print(" " + x[j][i]);
+											else
+												System.out.print( "  " + x[j][i]);
+										}
+										System.out.println("");
+									}
+									System.out.println("");
+									
+									if(g.isRedTurn() &&  ai_num==-1 || !g.isRedTurn() && ai_num==1) {
+										good_columns.add(col);
+									}
+									if(g.isRedTurn() &&  ai_num==1 || !g.isRedTurn() && ai_num==-1) {
+										bad_columns.add(col);
+									}
+									break;
+								}
+								else {
+									break;
+								}
+									
+							}
+						}
+					}
+					
+					for(int num:moves_played) {
+						g.unplay(num);
+						
+					}
+					
+					moves_played.clear();
+					g.unplay(col);
+				}	
+			}
+			return(columnQuality(g, new moveFinder(g), false, good_columns, bad_columns));
+		}
 	}
 	
-	public int max_element_array(int[] quality_arr, ArrayList<Integer> illegal_moves, ArrayList<Integer> losing_moves, ArrayList<Integer> unwise_moves, ArrayList<Integer> loss_avoider, 
+	public int max_element_array(int[] quality_arr, ArrayList<Integer> good_sim_columns, ArrayList<Integer> bad_sim_columns, ArrayList<Integer> illegal_moves, ArrayList<Integer> losing_moves, ArrayList<Integer> unwise_moves, ArrayList<Integer> loss_avoider, 
 			ArrayList<Integer> loss_creator, ArrayList<Integer> AI_three_unblockable, ArrayList<Integer> opposing_three_unblockable, ArrayList<Integer> AI_three_blockable, ArrayList<Integer> opposing_three_blockable, 
-			ArrayList<Integer> winning_column, ArrayList<Integer> three_preventable, int[][] four_potential_map) {
+			ArrayList<Integer> winning_column, ArrayList<Integer> three_preventable, ArrayList<Integer> bad_position, int[][] four_potential_map) {
 		
 		int max = -1000000;
 		int max_element = 0;
@@ -1074,6 +1125,7 @@ public class JackMaloonAI implements CFPlayer{
 		int three_grouped_blockable = 7;
 		int opponent_three_blockable  = 5;
 		int great_column = 400;
+		int bad_place = -50;
 		
 		//System.out.println("before");
 		for(int x=0; x<quality_arr.length; x++) { 
@@ -1083,8 +1135,11 @@ public class JackMaloonAI implements CFPlayer{
 		
 		ArrayList<Integer> duplicate_max = new ArrayList<>();
 		
-		for(int index:losing_moves) {		//Setting values in arr to negative value if move is losing
-			quality_arr[index] += losing;
+		for(int index:good_sim_columns) {		//Adding value to a winning column
+			quality_arr[index] += great_column;
+		}
+		for(int index:bad_sim_columns) {		//Adding value to a winning column
+			quality_arr[index] += unwise;
 		}
 		for(int index:unwise_moves) {		//Setting values in arr to negative value if move is unwise. Still greater than losing since this move is better
 			quality_arr[index] += unwise;
@@ -1110,8 +1165,14 @@ public class JackMaloonAI implements CFPlayer{
 		for(int index:three_preventable) {		//Adding value to blocking three in a row
 			quality_arr[index] += block_opponent_three;
 		}
+		for(int index:bad_position) {		//Adding value to blocking three in a row
+			quality_arr[index] += bad_place;
+		}
 		for(int index:winning_column) {		//Adding value to a winning column
 			quality_arr[index] += great_column;
+		}
+		for(int index:losing_moves) {		//Setting values in arr to negative value if move is losing
+			quality_arr[index] = losing;
 		}
 		for(int index:illegal_moves) {		//Setting values in arr to arbitrary negative value if move is illegal
 			quality_arr[index] = illegal;
@@ -1131,7 +1192,7 @@ public class JackMaloonAI implements CFPlayer{
 
 		
 		for(int i=0; i<quality_arr.length; i++) { 
-			//System.out.print(quality_arr[i] + " ");
+			System.out.print(quality_arr[i] + " ");
 			if(quality_arr[i] > max) {
 				max = quality_arr[i];
 				max_element = i;
@@ -1145,8 +1206,8 @@ public class JackMaloonAI implements CFPlayer{
 					duplicate_max.add(max_element);
 			}
 		}
-		//System.out.println("");
-		//System.out.println("");
+		System.out.println("");
+		System.out.println("");
 		
 		if(duplicate_max.size()>0) {
 			Random rand = new Random();

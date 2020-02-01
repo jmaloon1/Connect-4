@@ -79,15 +79,15 @@ public class CFGame {
 			  if(state[column][r]!=0) {
 				  state[column][r] = 0;
 				  if(isRedTurn()) {
-					  System.out.println("made false");
+					  //System.out.println("made false");
 					  isRedTurn = false;
 				  }
 				  else {
-					  System.out.println("made true");
+					  //System.out.println("made true");
 					  isRedTurn = true;
 				  }
 				  
-				  System.out.println(isRedTurn());
+				  //System.out.println(isRedTurn());
 				  return true;
 			  }
 		  }
@@ -151,7 +151,7 @@ public class CFGame {
 		  return true;
 	  
 	  for(int k = 0;k<numCols;k++) {
-		  if(state[k][numRows-1]== 0)
+		  if(state[k][numRows-1]==0)
 			  return false;
 	  }
       return true;
