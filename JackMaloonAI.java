@@ -955,11 +955,6 @@ public class JackMaloonAI implements CFPlayer{
 				for(int j=1;j<g.getNumRows(); j++) {
 					if(!three_preventer.contains(i) && three_potential_map[i][j]!=0 && ((j>1 && getState[i][j-1]==0 && getState[i][j-2] != 0) || (j==1 && getState[i][j-1]==0))) {
 					  	three_preventer.add(i);
-					  	System.out.println("i " + i);
-					  	System.out.println("j " + j);
-					  	System.out.println(three_potential_map[i][j]);
-					  	System.out.println(getState[i][j-1]);
-					  	
 					}
 					if(!bad_position.contains(i) && i<g.getNumCols()-3 && (three_potential_map[i][j]==opponent_color || three_potential_map[i][j]==2)
 					   && (three_potential_map[i+3][j]==opponent_color || three_potential_map[i+3][j]==2)
@@ -1043,17 +1038,13 @@ public class JackMaloonAI implements CFPlayer{
 		}
 		else {
 			for(int col=0; col<g.getNumCols(); col++) { 
-				System.out.println(col + " not full column " + g.notFullColumn(col));
 				if(g.notFullColumn(col)) {
-					System.out.println("ggggggggggggggggggggggggggggggg " + m.getState[col][5]);
-					System.out.println("First playing move " + col);
-					System.out.println("");
 					g.play(col);
 					if(!g.isRedTurn())
 						ai_num = 1;
 				
 					if(!g.isGameOver()) {
-						for(int sim_move=0; sim_move<12; sim_move++) {
+						for(int sim_move=0; sim_move<10; sim_move++) {
 							index = columnQuality(g, new moveFinder(g), false, new ArrayList(), new ArrayList());
 							g.play(index);
 							//System.out.println("move " + index);
@@ -1063,6 +1054,7 @@ public class JackMaloonAI implements CFPlayer{
 							
 							if(g.isGameOver()) {
 								if(g.isWinner()) {
+									/*
 									System.out.println("game over");
 									for(int i = 5;i>=0;i--) {
 										for(int j = 0;j<g.getNumCols();j++) {
@@ -1075,7 +1067,7 @@ public class JackMaloonAI implements CFPlayer{
 										System.out.println("");
 									}
 									System.out.println("");
-									
+									*/
 									if(g.isRedTurn() &&  ai_num==-1 || !g.isRedTurn() && ai_num==1) {
 										good_columns.add(col);
 									}
@@ -1192,7 +1184,7 @@ public class JackMaloonAI implements CFPlayer{
 
 		
 		for(int i=0; i<quality_arr.length; i++) { 
-			System.out.print(quality_arr[i] + " ");
+			//System.out.print(quality_arr[i] + " ");
 			if(quality_arr[i] > max) {
 				max = quality_arr[i];
 				max_element = i;
@@ -1206,8 +1198,8 @@ public class JackMaloonAI implements CFPlayer{
 					duplicate_max.add(max_element);
 			}
 		}
-		System.out.println("");
-		System.out.println("");
+		//System.out.println("");
+		//System.out.println("");
 		
 		if(duplicate_max.size()>0) {
 			Random rand = new Random();
