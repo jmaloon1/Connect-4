@@ -373,7 +373,9 @@ public class MediumAI implements CFPlayer{
 		
 		
 		int best_move = max_element_array(touching_array, m.illegal_moves, m.losing_moves, m.unwise_moves, m.row_stopper, m.AI_three_consecutive, m.opposing_three_consecutive, m.aaa);
-		return best_move;
+		
+		RandomAI rand = new RandomAI();		//calls RandomAI if all else fails
+		return(rand.nextMove(g));
 	}
 	
 	public int max_element_array(int[] arr, ArrayList<Integer> illegal_moves, ArrayList<Integer> losing_moves, ArrayList<Integer> unwise_moves, ArrayList<Integer> row_stopper, ArrayList<Integer> AI_three_consecutive, ArrayList<Integer> opposing_three_consecutive, int[][] aaa) {
