@@ -192,11 +192,6 @@ public class JackMaloonAI implements CFPlayer{
 					}
 					else if(four_map[i][j]==opp_color && (j==0 || getState[i][j-1]!=0)) {
 						
-						System.out.println(opp_color);
-						System.out.println(four_map[i][j]);
-						System.out.println(i);
-						System.out.println(j);
-						
 						if(!losing_columns.contains(i))
 							losing_columns.add(i);
 					}
@@ -238,18 +233,6 @@ public class JackMaloonAI implements CFPlayer{
 					
 					if(j<g.getNumRows()-1 && four_map[i][j]==AI_color && (four_map[i][j+1]==AI_color || four_map[i][j+1]==2)) {
 						
-						System.out.println("four_map");	
-						for(int ii = 5;ii>=0;ii--) {
-							for(int jj = 0;jj<g.getNumCols();jj++) {
-
-								if(four_map[jj][ii] == -1)
-									System.out.print(" " + four_map[jj][ii]);
-								else
-									System.out.print( "  " + four_map[jj][ii]);
-							}
-							System.out.println("");
-						}
-						System.out.println("");	
 												
 						int empty_squares = 0;
 						for(int num=0; num<j; num++) {
@@ -265,7 +248,6 @@ public class JackMaloonAI implements CFPlayer{
 							already_winning_column = true;
 							System.out.print(winnable_columns);
 							if(!winnable_columns.containsKey(i)) {
-								System.out.println("wwwww " + i);
 								winnable_columns.put(i, empty_squares);
 								winning_index.add(i);
 							}
@@ -731,19 +713,14 @@ public class JackMaloonAI implements CFPlayer{
 								if(four_map[i][j]==opp_color && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2) 
 								   && !loss_creator.contains(column)) {
 									
-									System.out.println("column " + column);
-									System.out.println("row " + row);
-									System.out.println("i " + i);
-									System.out.println("j " + j);
-									
 									
 									for(int num=0; num<j; num++) {
 										if(four_map[i][num]==AI_color)
 											AI_can_win = true;
 									}
 									
-									System.out.println(AI_can_win);
-									System.out.println(winning_index);
+
+									
 									if(!AI_can_win) {
 										if(!winning_index.isEmpty()) {
 											for(int index: winning_index) {
@@ -1018,9 +995,7 @@ public class JackMaloonAI implements CFPlayer{
 				    }
 			    }  
 			}
-			
-			System.out.println("uarr " + three_unblockable);
-			System.out.println("okarr " + three_blockable);
+
 		
 			if((row>0 && getState[column][row-1]!=0)||row==0) {
 				
@@ -1032,17 +1007,26 @@ public class JackMaloonAI implements CFPlayer{
 					if(opp_turn && (opp_color==1 && r%2==0 || opp_color==-1 && r%2==1) || !opp_turn && (AI_color==1 && r%2==0 || AI_color==-1 && r%2==1)) {
 					
 						best_unblockable_arr.add(num);
-						System.out.println("best " + num);
 					}
 					else {
 						ok_unblockable_arr.add(num);
-						System.out.println("ok " + num);
 					}
 		    		
 				}
 
 		    }
-			
+			else if(row>0 && getState[column][row-1]==0 && (row==1 || getState[column][row-2]!=0)) {
+				
+				for(int num: three_unblockable.keySet()) {
+		    		if(!bad_position.contains(num)) {
+						int r = three_unblockable.get(num);
+						if(opp_turn && (opp_color==1 && r%2==0 || opp_color==-1 && r%2==1)) {
+						
+							bad_position.add(num);
+						}
+		    		}
+				}
+			}
 		}
 		
 		public void numberTouching(int column, int row) {	//counts number of filled squares are adjacent to simulated move
