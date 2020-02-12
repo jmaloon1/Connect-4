@@ -113,13 +113,643 @@ public class JackMaloonAI implements CFPlayer{
 			if(!AI_winnable_columns.isEmpty())
     			testWinningColumn(true, column);
 			if(!opp_winnable_columns.isEmpty())
-    			testWinningColumn(false, column
-    					);
+    			testWinningColumn(false, column);
 			
 			avoidLoss();   //sees is a row can be won horizontally in two moves
 			avoidAllowingThree();  //checks to see is a certain move would alow three out of four to be created
 
 			return true;
+		}
+		
+		public int findWinningColumn() {
+			
+			four_map = fourMap();
+			ArrayList<Integer> losing_columns = new ArrayList<>();			//holds columns that would cause loss
+			
+			for(int i=0; i<g.getNumCols(); i++) {    //looks at places on board where four in a row can be made and if two of same color on top of each other, indicates winning column
+				
+				boolean opponent_can_win = false;
+				
+				for(int j=0;j<g.getNumRows(); j++) {
+					
+					if((four_map[i][j]==AI_color || four_map[i][j]==2) && (j==0 || getState[i][j-1]!=0)) {   //finding a winning move
+						return(i);
+					}
+					else if(four_map[i][j]==opp_color && (j==0 || getState[i][j-1]!=0)) {		//finding opponents winning moves
+						
+						if(!losing_columns.contains(i))
+							losing_columns.add(i);
+					}
+					
+					if((j==1 && getState[i][j-1]==0) ||(j>1 && getState[i][j-1]==0 && getState[i][j-2]!=0)) {  //checks to see whether a move 2 moves from now can win, and avoids it
+						
+				    	if((four_map[i][j]==1 && g.isRedTurn() || four_map[i][j]==-1 && !g.isRedTurn())) {   //finding moves that would allow opponent to block AI's four in a row
+				    		
+				    		if(j%2==1 && !g.isRedTurn() || j%2==0 && g.isRedTurn()) {		//finding whether AI's potential winning move is in good row
+				    			unwise_moves.add(i);
+				    		}
+				    		else {		//if potential winning column is in bad row, seeing whether it can be sacrificed for better winning move
+				    			
+				    			if(j<g.getNumRows()-1) {
+				    				
+				    				ArrayList<Integer> best_unblockable = new ArrayList<>();		//temporary arrayList needed for threeInARow function
+				    				ArrayList<Integer> ok_unblockable = new ArrayList<>();			//temporary arrayList needed for threeInARow function
+				    				ArrayList<Integer> blockable = new ArrayList<>();				//temporary arrayList needed for threeInARow function
+				    				
+				    				getState[i][j-1] = AI_color;		
+				    				getState[i][j] = opp_color;
+				    				
+				    				threeInARow(i, j+1, false, best_unblockable, ok_unblockable, blockable);
+				    				if(!best_unblockable.isEmpty()) {
+				    					sacrifice_moves.add(i);
+				    					throw new ArithmeticException();
+				    				}
+				    				getState[i][j-1] = 0;
+				    				getState[i][j] = 0;
+				    				
+				    			}
+				    		}
+				    	}
+						else if(four_map[i][j]==2 || (four_map[i][j]==-1 && g.isRedTurn() || four_map[i][j]==1 && !g.isRedTurn())) 
+							losing_moves.add(i);			//moves that will cause AI loss			
+					}
+					
+					
+					if(j<g.getNumRows()-1 && four_map[i][j]==AI_color && (four_map[i][j+1]==AI_color || four_map[i][j+1]==2)) {
+						//looking for columns that have two stacked winning moves
+						System.out.println("already winning column " + i);	
+						int empty_squares = 0;
+						for(int num=0; num<j; num++) {
+
+							if(four_map[i][num]==opp_color || four_map[i][num]==2) {
+								System.out.println("opp can win " + i);
+								opponent_can_win = true;
+							}
+							
+							if(getState[i][num]==0)
+								empty_squares++;
+						}
+							
+						if(!opponent_can_win) {
+							already_winning_column = true;
+							if(!AI_winnable_columns.containsKey(i)) {
+								AI_winnable_columns.put(i, empty_squares);
+							}
+						}
+					}
+				}
+			}
+			
+			if(!losing_columns.isEmpty()) {  //return random losing column if they exists
+
+				Random rand = new Random();
+				int index = rand.nextInt(losing_columns.size());
+				return(losing_columns.get(index));
+			}
+
+			return(-1);   //if no winning moves or opponent winning moves are found, -1 returned to indicate to try out other criteria
+		}
+		
+		public int[][] fourMap() {
+			
+			int[] move_types = {-1,1};
+			int[][] temp_array = new int[g.getNumCols()][g.getNumRows()];
+			
+			for(int i=0; i<g.getNumCols(); i++) {
+				  for(int j=0;j<g.getNumRows(); j++) {
+					  temp_array[i][j] = 0;
+				  }
+			}
+			
+			for(int i=0; i<g.getNumCols(); i++) {
+				for(int j=0;j<g.getNumRows(); j++) {
+					for(int move:move_types) {
+						if(getState[i][j]==0) {
+			
+							getState[i][j]=move;
+							
+							for(int col=0; col<g.getNumCols(); col++) {
+								for(int row=0; row<g.getNumRows(); row++) {	
+									if(getState[col][row]!=0 && ((row<g.getNumRows()-3 && getState[col][row]==getState[col][row+1] && getState[col][row]==getState[col][row+2] 
+									   && getState[col][row]==getState[col][row+3]) || (col<g.getNumCols()-3 && getState[col][row]==getState[col+1][row] 
+									   && getState[col][row]==getState[col+2][row] && getState[col][row]==getState[col+3][row]) || (row<g.getNumRows()-3 
+									   && col<g.getNumCols()-3 && getState[col][row]==getState[col+1][row+1] && getState[col][row]==getState[col+2][row+2] 
+									   && getState[col][row]==getState[col+3][row+3]) || (row>=3 && col<g.getNumCols()-3 && getState[col][row]==getState[col+1][row-1] 
+									   && getState[col][row]==getState[col+2][row-2] && getState[col][row]==getState[col+3][row-3]))) {
+
+										  if(temp_array[i][j]==move)
+											  continue;
+										  else if(temp_array[i][j]==0)
+									    	  temp_array[i][j] = move;
+										  else if(temp_array[i][j]!=move) { 
+											  temp_array[i][j] = 2;
+										  }
+									}
+								}
+							}
+							getState[i][j] = 0;
+						  }
+					  }
+				  }  
+			  }
+			  return temp_array;
+		}
+
+		public void avoidLoss() {	//sees whether a row be guaranteed 4 in a row in 2 turns
+			
+			for(int i=0; i<g.getNumCols()-4; i++) {
+				for(int j=0;j<g.getNumRows(); j++) {
+					
+					if(getState[i+2][j]!=0 && (getState[i][j]==0 && getState[i+1][j]==0 && getState[i+2][j]==getState[i+3][j] && getState[i+4][j]==0)) {  //checking to see if row can be won/lost or can be set up to win/lose
+						
+						if(j==0 || (j>0 && (getState[i][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]!=0))) {
+							System.out.println('a');
+							if(!loss_avoider.contains(i+1))
+								loss_avoider.add(i+1);
+						}
+						else if(j>0 && getState[i][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)) {
+							System.out.println('b');
+							if(!loss_creator.contains(i+4) && getState[i+2][j]==opp_color)
+								loss_creator.add(i+4);
+							else if(!bad_setup.contains(i+4) && getState[i+2][j]==AI_color)
+								bad_setup.add(i+4);
+						}
+						else if(j>0 && getState[i][j-1]!=0 && getState[i+1][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)) {
+							System.out.println('c');
+							if(!loss_creator.contains(i+1) && getState[i+2][j]==opp_color)
+								loss_creator.add(i+1);
+							else if(!bad_setup.contains(i+1) && getState[i+2][j]==AI_color)
+								bad_setup.add(i+1);
+						}
+						else if(j>0 && getState[i][j-1]==0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i][j-2]!=0)) {
+							System.out.println('d');
+							if(!loss_creator.contains(i) && getState[i+2][j]==opp_color)
+								loss_creator.add(i);
+							else if(!bad_setup.contains(i) && getState[i+2][j]==AI_color)
+								bad_setup.add(i);
+							
+						}
+					}
+					
+					if(getState[i+2][j]!=0 && (getState[i][j]==0 && getState[i+1][j]==getState[i+2][j] && getState[i+3][j]==0 && getState[i+4][j]==0)) {  //checking to see if row can be won/lost or can be set up to win/lose		
+					
+						if(j==0|| (j>0 && (getState[i][j-1]!=0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]!=0))) {
+							System.out.println('e');	
+							if(!loss_avoider.contains(i+3))
+								loss_avoider.add(i+3);
+						}
+						else if(j>0 && getState[i][j-1]!=0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)) {
+							System.out.println('f');
+							if(!loss_creator.contains(i+4) && getState[i+2][j]==opp_color)
+								loss_creator.add(i+4);
+							else if(!bad_setup.contains(i+4) && getState[i+2][j]==AI_color)
+								bad_setup.add(i+4);
+						}
+						else if(j>0 && getState[i][j-1]!=0 && getState[i+3][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+3][j-2]!=0)) {
+							System.out.println('g');
+							if(!loss_creator.contains(i+3) && getState[i+2][j]==opp_color)
+								loss_creator.add(i+3);
+							else if(!bad_setup.contains(i+3) && getState[i+2][j]==AI_color)
+								bad_setup.add(i+3);
+						}
+						else if(j>0 && getState[i][j-1]==0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i][j-2]!=0)) {
+							System.out.println('h');
+							if(!loss_creator.contains(i) && getState[i+2][j]==opp_color)
+								loss_creator.add(i);
+							else if(!bad_setup.contains(i) && getState[i+2][j]==AI_color)
+								bad_setup.add(i);
+						}
+					}
+					
+					if(i>0 && i<g.getNumCols()-3 && getState[i][j]!=0 && getState[i+1][j]==0 && getState[i-1][j]==0 && getState[i+3][j]==0 && getState[i][j]==getState[i+2][j]) { //checking to see if row can be won/lost or can be set up to win/lose	
+						
+						if(j==0|| (j>0 && (getState[i-1][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]!=0))) {
+							System.out.println('i');
+							if(!loss_avoider.contains(i+1))
+								loss_avoider.add(i+1);
+						}
+						else if(j>0 && getState[i-1][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]==0 && (j==1 || j>1 && getState[i+3][j-2]!=0)) {
+							System.out.println('j');
+							if(!loss_creator.contains(i+3) && getState[i][j]==opp_color)
+								loss_creator.add(i+3);
+							else if(!bad_setup.contains(i+3) && getState[i][j]==AI_color)
+								bad_setup.add(i+3);
+						}
+						else if(j>0 && getState[i-1][j-1]!=0 && getState[i+1][j-1]==0 && getState[i+3][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)) {
+							System.out.println('k');
+							if(!loss_creator.contains(i+1) && getState[i][j]==opp_color)
+								loss_creator.add(i+1);
+							else if(!bad_setup.contains(i+1) && getState[i][j]==AI_color)
+								bad_setup.add(i+1);
+						}
+						else if(j>0 && getState[i-1][j-1]==0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]!=0 && (j==1 || j>1 && getState[i-1][j-2]!=0)) {
+							System.out.println('l');
+							if(!loss_creator.contains(i-1) && getState[i][j]==opp_color)
+								loss_creator.add(i-1);
+							else if(!bad_setup.contains(i-1) && getState[i][j]==AI_color)
+								bad_setup.add(i-1);
+						}
+					}
+					
+					if((i==0 || i==1) && getState[i][j]!=0 && getState[i+1][j]==0 && (getState[i+2][j]==getState[i][j] && getState[i+3][j]==0 || (getState[i+3][j]==getState[i][j] && getState[i+2][j]==0))  //checking to see if row can be won/lost or can be set up to win/lose	
+						&& getState[i+4][j]==0 && getState[i+5][j]==getState[i][j]) {
+						
+						if(j==0 || (getState[i+1][j-1]!=0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) && getState[i+4][j-1]!=0)){
+							System.out.println('m');
+							if(!loss_avoider.contains(i+1))
+								loss_avoider.add(i+1);
+							if(!loss_avoider.contains(i+2) && getState[i+2][j]==0)
+								loss_avoider.add(i+2);
+							if(!loss_avoider.contains(i+3) && getState[i+3][j]==0)
+								loss_avoider.add(i+3);
+						}
+						else if(j>0 && getState[i+1][j-1]==0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) 
+							    && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)){
+							System.out.println('n');
+							if(!loss_creator.contains(i+1) && getState[i][j]==opp_color)
+								loss_creator.add(i+1);
+							else if(!bad_setup.contains(i+1) && getState[i][j]==AI_color)
+								bad_setup.add(i+1);
+						}
+						else if(j>0 && getState[i+1][j-1]!=0 && getState[i+2][j]==0 && getState[i+2][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+2][j-2]!=0)){
+							System.out.println('o');
+							if(!loss_creator.contains(i+2) && getState[i][j]==opp_color)
+								loss_creator.add(i+2);
+							else if(!bad_setup.contains(i+2) && getState[i][j]==AI_color)
+								bad_setup.add(i+2);
+						}
+						else if(j>0 && getState[i+1][j-1]!=0 && getState[i+3][j]==0 && getState[i+3][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+3][j-2]!=0)){
+							System.out.println('p');
+							if(!loss_creator.contains(i+3) && getState[i][j]==opp_color)
+								loss_creator.add(i+3);
+							else if(!bad_setup.contains(i+3) && getState[i][j]==AI_color)
+								bad_setup.add(i+3);
+						}
+						else if(j>0 && getState[i+1][j-1]!=0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) 
+							    && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)){
+							System.out.println('q');
+							if(!loss_creator.contains(i+4) && getState[i][j]==opp_color)
+								loss_creator.add(i+4);
+							else if(!bad_setup.contains(i+4) && getState[i][j]==AI_color)
+								bad_setup.add(i+4);
+						}
+					}
+
+					if(i<g.getNumCols()-3 && j<g.getNumRows()-3 && getState[i][j]==0 && getState[i+1][j+1]!=0 && getState[i+1][j+1]==getState[i+2][j+2] 
+					   && getState[i+3][j+3]==0) {   //two open on left upper diagonal
+						
+						if(i>0 && j>0 && getState[i-1][j-1]==0 && (j==1 || j>1 && getState[i-1][j-2]!=0) && getState[i][j-1]!=0 && getState[i+3][j+2]!=0) {    
+							System.out.println('r' + i);
+							if(!loss_avoider.contains(i))
+								loss_avoider.add(i);
+						}
+						else if(i>0 && j>1 && getState[i-1][j-2]==0 && (j==2 || getState[i-1][j-3]!=0) && getState[i][j-1]!=0 && getState[i+3][j+2]!=0) {
+							System.out.println('s');
+							if(!loss_creator.contains(i-1) && getState[i+1][j+1]==opp_color)
+								loss_creator.add(i-1);
+							else if(!bad_setup.contains(i-1) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i-1);
+						}
+						else if(i>0 && j>0 && getState[i-1][j-1]==0 && (j==1 || j>1 && getState[i-1][j-2]!=0 && getState[i][j-2]!=0) && getState[i][j-1]==0 && getState[i+3][j+2]!=0) {
+							System.out.println('t');
+							if(!loss_creator.contains(i) && getState[i+1][j+1]==opp_color)
+								bad_setup.add(i);
+							else if(!bad_setup.contains(i) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i);
+						}
+						else if(i>0 && (j==1 || j>1 && getState[i-1][j-2]!=0) && getState[i][j-1]!=0 && getState[i+3][j+2]==0 && getState[i+3][j+1]!=0) {
+							System.out.println('u');
+							if(!loss_creator.contains(i+3) && getState[i+1][j+1]==opp_color)
+								loss_creator.add(i+3);
+							else if(!bad_setup.contains(i+3) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i+3);
+						}
+						
+						if(j<g.getNumRows()-4 && (j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]!=0) {    //two open on right upper diagonal
+							System.out.println('v');
+							if(!loss_avoider.contains(i+3))
+								loss_avoider.add(i+3);
+						}
+						else if(j<g.getNumRows()-4 && j>0 && getState[i][j-1]==0 && (j==1 || getState[i][j-2]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]!=0) {
+							System.out.println('w');
+							if(!loss_creator.contains(i) && getState[i+1][j+1]==opp_color)
+								loss_creator.add(i);
+							else if(!bad_setup.contains(i) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i);
+						}
+						else if(j<g.getNumRows()-4 && (j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]==0 && getState[i+3][j+1]!=0 && getState[i+4][j+3]!=0) {
+							System.out.println('x');
+							if(!loss_creator.contains(i+3) && getState[i+1][j+1]==opp_color)
+								loss_creator.add(i+3);
+							else if(!bad_setup.contains(i+3) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i+3);
+						}
+						else if(j<g.getNumRows()-4 && (j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]==0 && getState[i+4][j+2]!=0) {
+							System.out.println('y');
+							if(!loss_creator.contains(i+4) && getState[i+1][j+1]==opp_color)
+								loss_creator.add(i+4);
+							else if(!bad_setup.contains(i+4) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i+4);
+						}		
+					}
+					
+					if(j<g.getNumRows()-4 && getState[i][j]==0 && getState[i+1][j+1]!=0 && getState[i+2][j+2]==0   //upper diagonal middle open
+					   && getState[i+1][j+1]==getState[i+3][j+3] && getState[i+4][j+4]==0) {
+
+						if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]!=0) {
+							System.out.println('z');
+							if(!loss_avoider.contains(i+2))
+								loss_avoider.add(i+2);
+						}
+						else if(j>0 && getState[i][j-1]==0 && (j==1 || getState[i][j-2]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]!=0) {
+							System.out.println("aa");
+							if(!loss_creator.contains(i) && getState[i+1][j+1]==opp_color)
+								loss_creator.add(i);
+							else if(!bad_setup.contains(i) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i);
+						}
+						else if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]==0 && getState[i+2][j]!=0 && getState[i+4][j+3]!=0) {
+							System.out.println("bb");
+							if(!loss_creator.contains(i+2) && getState[i+1][j+1]==opp_color)
+								loss_creator.add(i+2);
+							else if(!bad_setup.contains(i+2) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i+2);
+						}
+						else if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]==0 && getState[i+4][j+2]!=0) {
+							System.out.println("cc");
+							if(!loss_creator.contains(i+4) && getState[i+1][j+1]==opp_color)
+								loss_creator.add(i+4);
+							else if(!bad_setup.contains(i+4) && getState[i+1][j+1]==AI_color)
+								bad_setup.add(i+4);
+						}		
+					}
+					
+					if(j>2 && getState[i][j]==0 && getState[i+1][j-1]!=0 && getState[i+1][j-1]==getState[i+2][j-2] && getState[i+3][j-3]==0) {
+						
+						if(i>0 && (j==3 || getState[i+3][j-4]!=0) && j<g.getNumRows()-1 && getState[i-1][j]!=0 && getState[i][j-1]!=0) {  //lower diagonal two open left
+							System.out.println("dd");
+							if(!loss_avoider.contains(i))
+								loss_avoider.add(i);
+						}
+						else if(i>0 && j<g.getNumRows()-1 && getState[i-1][j]==0 && getState[i-1][j-1]!=0 
+								&& getState[i-1][j-1]!=0 && getState[i][j-1]!=0 && (j==3 || getState[i+3][j-4]!=0)) {
+							System.out.println("ee");
+							if(!loss_creator.contains(i-1) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i-1);
+							else if(!bad_setup.contains(i-1) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i-1);
+						}
+						else if(i>0 && j<g.getNumRows()-1 && getState[i-1][j]!=0 && getState[i][j-1]==0 
+								&& getState[i][j-2]!=0 && (j==3 || getState[i+3][j-4]!=0)) {
+							System.out.println("ff");
+							if(!loss_creator.contains(i) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i);
+							else if(!bad_setup.contains(i) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i);
+						}
+						else if(i>0 && j>3 && j<g.getNumRows()-1 && getState[i-1][j]!=0 && getState[i-1][j+1]==0 
+								&& getState[i][j-1]!=0 && getState[i+3][j-4]==0 && (j==4 || getState[i+3][j-5]!=0)) {
+							System.out.println("gg");
+							if(!loss_creator.contains(i+3) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i+3);
+							else if(!bad_setup.contains(i+3) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i+3);
+						}
+						
+						if(i<3 && j>3 && getState[i][j-1]!=0 && getState[i+3][j-4]!=0 
+						   && getState[i+4][j-4]==0 && (j==4 || getState[i+4][j-5]!=0)) {   //lower diagonal two open right
+							System.out.println("hh");
+							if(!loss_avoider.contains(i+3))
+								loss_avoider.add(i+3);
+						}
+						else if(i<3 && j>3 && getState[i][j-1]==0 && getState[i][j-2]!=0 && getState[i+3][j-4]!=0 
+								&& getState[i+4][j-4]==0 && (j==4 || getState[i+4][j-5]!=0)) {
+							System.out.println("ii");
+							if(!loss_creator.contains(i) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i);
+							else if(!bad_setup.contains(i) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i);
+						}
+						else if(i<3 && j>3 && getState[i][j-1]!=0 && getState[i+3][j-4]==0 && getState[i+4][j-4]==0 
+								&& (j==4 || getState[i+3][j-5]!=0 && getState[i+4][j-5]!=0)) {
+							System.out.println("jj");
+							if(!loss_creator.contains(i+3) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i+3);
+							else if(!bad_setup.contains(i+3) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i+3);
+						}
+						else if(j>4 && getState[i][j-1]!=0 && getState[i+3][j-4]!=0 && getState[i+4][j-5]==0) {
+							System.out.println("kk");
+							if(!loss_creator.contains(i+4) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i+4);
+							else if(!bad_setup.contains(i+4) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i+4);
+						}	
+					}
+					
+					if(i<3 && j>3 && getState[i][j]==0 && getState[i+1][j-1]!=0 && getState[i+1][j-1]==getState[i+3][j-3] 
+					   && getState[i+2][j-2]==0 && getState[i+4][j-4]==0) {  //lower diagonal middle open
+						
+						if(getState[i][j-1]!=0 && getState[i+2][j-3]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
+							System.out.println("ll");
+							if(!loss_avoider.contains(i+2))
+								loss_avoider.add(i+2);
+						}
+						else if(getState[i][j-1]==0 && getState[i][j-2]!=0 && getState[i+2][j-3]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
+							System.out.println("mm");
+							if(!loss_creator.contains(i) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i);
+							else if(!bad_setup.contains(i) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i);
+						}
+						else if(getState[i][j-1]!=0 && getState[i+2][j-3]==0 && getState[i+2][j-4]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
+							System.out.println("nn");
+							if(!loss_creator.contains(i+2) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i+2);
+							else if(!bad_setup.contains(i+2) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i+2);
+						}
+						else if(j>4 &getState[i][j-1]!=0 && getState[i+2][j-3]!=0 && getState[i+4][j-5]==0) {
+							System.out.println("oo");
+							if(!loss_creator.contains(i+4) && getState[i+1][j-1]==opp_color)
+								loss_creator.add(i+4);
+							else if(!bad_setup.contains(i+4) && getState[i+1][j-1]==AI_color)
+								bad_setup.add(i+4);
+						}
+					}				
+				}
+			}  
+		}
+		
+		public void winningColumnCreator(int column, int row, boolean opp_turn) {
+			
+			HashMap<Integer, Integer> opp_winning_moves = new HashMap<>();
+			HashMap<Integer, Integer> ai_winning_moves = new HashMap<>();
+			four_map = fourMap();
+			boolean opp_can_win = false;
+			int empty_squares;
+
+			for(int i=0; i<g.getNumCols(); i++) {
+				
+				empty_squares=0;
+				
+				for(int j=0; j<g.getNumRows()-1; j++) {
+					
+					if(getState[i][j]==0)
+						empty_squares++;
+					
+					if(!not_winning_column.contains(i)) {
+					
+						if(four_map[i][j]==AI_color && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2)) {
+							
+							
+							System.out.println("fourmap + here " + i);
+							for(int ii=5; ii>=0; ii--) {
+								for(int jj = 0;jj<g.getNumCols();jj++) {
+									if(four_map[jj][ii] == -1)
+										System.out.print(" " + four_map[jj][ii]);
+									else
+										System.out.print( "  " + four_map[jj][ii]);
+								}
+								System.out.println("");
+							}
+							System.out.println("");	
+						
+							
+							
+							
+							for(int num=0; num<j; num++) {
+								if(four_map[i][num]==opp_color || four_map[i][num]==2)
+									opp_can_win = true;			
+							}
+							if(!AI_winning_column.contains(column) && !opp_can_win) {
+								System.out.println("found AI winning column " + column );
+								
+								AI_winnable_columns.put(column, empty_squares);
+							}
+						}
+						else if(four_map[i][j]==opp_color && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2)) {
+							
+							for(int num=0; num<j; num++) {
+								if(four_map[i][j]==opp_color || four_map[i][num]==2)
+									opp_can_win = true;			
+							}
+							if(!opp_winning_column.contains(column) && !opp_can_win) {
+								System.out.println("found opp winning column " + column );
+								
+								opp_winnable_columns.put(column, empty_squares);
+							}
+						}
+						if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
+							
+							if(!ai_winning_moves.containsKey(column))
+								ai_winning_moves.put(column, 1);
+							else {
+								int count = ai_winning_moves.get(column);
+								ai_winning_moves.put(column, count+1);
+							}
+						}
+						else if(four_map[i][j]==opp_color && (j==0 || getState[i][j-1]!=0)) {
+							
+							if(!opp_winning_moves.containsKey(column))
+								opp_winning_moves.put(column, 1);
+							else {
+								int count = opp_winning_moves.get(column);
+								opp_winning_moves.put(column, count+1);
+							}
+						}	
+					}
+				}					    
+			}
+			
+			for(int num=0; num<g.getNumCols(); num++){
+				if(!AI_winning_column.contains(column) && (ai_winning_moves.containsKey(num) && ai_winning_moves.get(num)>1)){ 
+					System.out.println("Ai winning column " +column );
+					AI_winning_column.add(column);
+				}
+				if(!opp_winning_column.contains(column) && (opp_winning_moves.containsKey(num) && opp_winning_moves.get(num)>1)) {
+					System.out.println("opp winning column " +column );
+					opp_winning_column.add(column);
+				}
+			}
+		}
+		
+		public void losingBoardCreator(int column, int row){
+			
+			HashMap<Integer, Integer> opp_winning_creator = new HashMap<>();
+			int[][] four_map;
+
+			for(int c=0; c<g.getNumCols(); c++) {
+				
+				int empty_squares = 0;
+				boolean AI_can_win = false;
+				
+				for(int r=0; r<g.getNumRows(); r++) {
+					
+					if(getState[c][r]==0) {
+						empty_squares++;
+					}
+					
+					if(getState[c][r]==0 && (r==0||getState[c][r-1]!=0)) {
+						opp_winning_creator = new HashMap<>();
+						
+						getState[c][r] = opp_color;
+						four_map = fourMap();
+						
+						for(int i=0; i<g.getNumCols(); i++) {
+							for(int j=0; j<g.getNumRows()-1; j++) {
+								
+								if(four_map[i][j]==opp_color && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2) 
+								   && !loss_creator.contains(column)) {
+									
+									for(int num=0; num<j; num++) {
+										if(four_map[i][num]==AI_color)
+											AI_can_win = true;
+									}
+									
+									if(!AI_can_win) {
+										if(!AI_winnable_columns.isEmpty()) {
+											for(int index: winning_index) {
+												if(empty_squares<AI_winnable_columns.get(index)) {
+													loss_creator.add(column);
+												}
+												
+											}
+										}
+										else {
+											loss_creator.add(column);
+											System.out.println("Winnnnnnable columns " + AI_winnable_columns);
+										}
+									}
+									
+								}
+								
+								if(four_map[i][j]==opp_color && (j==0 || getState[i][j-1]!=0)) {
+									
+									if(!opp_winning_creator.containsKey(column))
+										opp_winning_creator.put(column, 1);
+									else {
+										int count = opp_winning_creator.get(column);
+										opp_winning_creator.put(column, count+1);
+									}
+								}	
+							}
+						}
+						getState[c][r] = 0;
+					
+
+						for(int col_num=0; col_num<g.getNumCols(); col_num++){
+							if(!opp_winning_creator.isEmpty() && opp_winning_creator.containsKey(col_num) && opp_winning_creator.get(col_num)>1) { 
+								
+								if(!loss_creator.contains(col_num)) {
+									loss_creator.add(col_num);
+									System.out.println("loss creator " + col_num);
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 		
 		public void destroyWinningColumn(boolean opp_turn, int column) {
@@ -283,9 +913,9 @@ public class JackMaloonAI implements CFPlayer{
 									still_good_column = col;
 								}
 							}
-							
+							getState[ii][j] = 0;
 						}
-						getState[ii][j] = 0;
+						
 						break;
 					}
 				}
@@ -297,7 +927,6 @@ public class JackMaloonAI implements CFPlayer{
 					System.out.println("column " + column);
 					winnable_columns.remove(col);
 				}
-
 				getState[col][row_of_move] = 0;
 
 			}
@@ -310,681 +939,6 @@ public class JackMaloonAI implements CFPlayer{
 			
 		}
 			
-		public int findWinningColumn() {
-			
-			four_map = fourMap();
-			ArrayList<Integer> losing_columns = new ArrayList<>();
-			
-			for(int i=0; i<g.getNumCols(); i++) {    //looks at places on board where four in a row can be made and if two of same color on top of each other, indicates winning column
-				
-				boolean opponent_can_win = false;
-				
-				for(int j=0;j<g.getNumRows(); j++) {
-					
-					if((four_map[i][j]==AI_color || four_map[i][j]==2) && (j==0 || getState[i][j-1]!=0)) {
-						return(i);
-					}
-					else if(four_map[i][j]==opp_color && (j==0 || getState[i][j-1]!=0)) {
-						
-						if(!losing_columns.contains(i))
-							losing_columns.add(i);
-					}
-					
-					if((j==1 && getState[i][j-1]==0) ||(j>1 && getState[i][j-1]==0 && getState[i][j-2]!=0)) {  //checks to see whether a move 2 moves from now can win, and avoids it
-						
-				    	if((four_map[i][j]==1 && g.isRedTurn() || four_map[i][j]==-1 && !g.isRedTurn())) { 
-				    		
-				    		if(j%2==1 && !g.isRedTurn() || j%2==0 && g.isRedTurn()) {
-				    			unwise_moves.add(i);
-				    			System.out.println("sacrifice " + i);
-				    		}
-				    		else {
-				    			
-				    			if(j<g.getNumRows()-1) {
-				    				
-				    				ArrayList<Integer> best_unblockable = new ArrayList<>();
-				    				ArrayList<Integer> ok_unblockable = new ArrayList<>();
-				    				ArrayList<Integer> blockable = new ArrayList<>();
-				    				
-				    				getState[i][j-1] = AI_color;
-				    				getState[i][j] = opp_color;
-				    				
-				    				threeInARow(i, j+1, false, best_unblockable, ok_unblockable, blockable);
-				    				if(!best_unblockable.isEmpty()) {
-				    					sacrifice_moves.add(i);
-						    			System.out.println("unwise " + i);
-				    				}
-				    				getState[i][j-1] = 0;
-				    				getState[i][j] = 0;
-				    				
-				    			}
-				    		}
-				    	}
-						else if(four_map[i][j]==2 || (four_map[i][j]==-1 && g.isRedTurn() || four_map[i][j]==1 && !g.isRedTurn())) 
-							losing_moves.add(i);						
-					}
-					
-					
-					if(j<g.getNumRows()-1 && four_map[i][j]==AI_color && (four_map[i][j+1]==AI_color || four_map[i][j+1]==2)) {
-						
-						System.out.println("fourmap");
-						for(int ii=5; ii>=0; ii--) {
-							for(int jj = 0;jj<g.getNumCols();jj++) {
-								if(four_map[jj][ii] == -1)
-									System.out.print(" " + four_map[jj][ii]);
-								else
-									System.out.print( "  " + four_map[jj][ii]);
-							}
-							System.out.println("");
-						}
-						System.out.println("");	
-					
-						
-						
-						
-						
-						
-						System.out.println("already winning column " + i);	
-						int empty_squares = 0;
-						for(int num=0; num<j; num++) {
-
-							if(four_map[i][num]==opp_color || four_map[i][num]==2) {
-								System.out.println("opp can win " + i);
-								opponent_can_win = true;
-							}
-							
-							if(getState[i][num]==0)
-								empty_squares++;
-						}
-							
-						if(!opponent_can_win) {
-							already_winning_column = true;
-							System.out.print(AI_winnable_columns);
-							if(!AI_winnable_columns.containsKey(i)) {
-								AI_winnable_columns.put(i, empty_squares);
-							}
-						}
-					}
-				}
-			}
-			
-			if(!losing_columns.isEmpty()) {
-
-				Random rand = new Random();
-				int index = rand.nextInt(losing_columns.size());
-				return(losing_columns.get(index));
-			}
-
-			return(-1);
-		}
-		
-		public int[][] fourMap() {	//sees whether there is a winning move
-			
-			int[] move_types = {-1,1};
-			int[][] temp_array = new int[g.getNumCols()][g.getNumRows()];
-			
-			for(int i=0; i<g.getNumCols(); i++) {
-				  for(int j=0;j<g.getNumRows(); j++) {
-					  temp_array[i][j] = 0;
-				  }
-			}
-			
-			for(int i=0; i<g.getNumCols(); i++) {
-				for(int j=0;j<g.getNumRows(); j++) {
-					for(int move:move_types) {
-						if(getState[i][j]==0) {
-			
-							getState[i][j]=move;
-							
-							for(int col=0; col<g.getNumCols(); col++) {
-								for(int row=0; row<g.getNumRows(); row++) {	
-									if(getState[col][row]!=0 && ((row<g.getNumRows()-3 && getState[col][row]==getState[col][row+1] && getState[col][row]==getState[col][row+2] 
-									   && getState[col][row]==getState[col][row+3]) || (col<g.getNumCols()-3 && getState[col][row]==getState[col+1][row] 
-									   && getState[col][row]==getState[col+2][row] && getState[col][row]==getState[col+3][row]) || (row<g.getNumRows()-3 
-									   && col<g.getNumCols()-3 && getState[col][row]==getState[col+1][row+1] && getState[col][row]==getState[col+2][row+2] 
-									   && getState[col][row]==getState[col+3][row+3]) || (row>=3 && col<g.getNumCols()-3 && getState[col][row]==getState[col+1][row-1] 
-									   && getState[col][row]==getState[col+2][row-2] && getState[col][row]==getState[col+3][row-3]))) {
-
-										  if(temp_array[i][j]==move)
-											  continue;
-										  else if(temp_array[i][j]==0)
-									    	  temp_array[i][j] = move;
-										  else if(temp_array[i][j]!=move) { 
-											  temp_array[i][j] = 2;
-										  }
-									}
-								}
-							}
-							getState[i][j] = 0;
-						  }
-					  }
-				  }  
-			  }
-			  return temp_array;
-		}
-
-		public void avoidLoss() {	//sees whether a row be guaranteed 4 in a row in 2 turns
-			
-			for(int i=0; i<g.getNumCols()-4; i++) {
-				for(int j=0;j<g.getNumRows(); j++) {
-					
-					if(getState[i+2][j]!=0 && (getState[i][j]==0 && getState[i+1][j]==0 && getState[i+2][j]==getState[i+3][j] && getState[i+4][j]==0)) {  //checking to see if row can be won/lost or can be set up to win/lose
-						
-						if(j==0 || (j>0 && (getState[i][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]!=0))) {
-							System.out.println('a');
-							if(!loss_avoider.contains(i+1))
-								loss_avoider.add(i+1);
-						}
-						else if(j>0 && getState[i][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)) {
-							System.out.println('b');
-							if(!loss_creator.contains(i+4) && getState[i+2][j]==opp_color)
-								loss_creator.add(i+4);
-							else if(!bad_setup.contains(i+4) && getState[i+2][j]==AI_color)
-								bad_setup.add(i+4);
-						}
-						else if(j>0 && getState[i][j-1]!=0 && getState[i+1][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)) {
-							System.out.println('c');
-							if(!loss_creator.contains(i+1) && getState[i+2][j]==opp_color)
-								loss_creator.add(i+1);
-							else if(!bad_setup.contains(i+1) && getState[i+2][j]==AI_color)
-								bad_setup.add(i+1);
-						}
-						else if(j>0 && getState[i][j-1]==0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i][j-2]!=0)) {
-							System.out.println('d');
-							if(!loss_creator.contains(i) && getState[i+2][j]==opp_color)
-								loss_creator.add(i);
-							else if(!bad_setup.contains(i) && getState[i+2][j]==AI_color)
-								bad_setup.add(i);
-						}
-					}
-					
-					if(getState[i+2][j]!=0 && (getState[i][j]==0 && getState[i+1][j]==getState[i+2][j] && getState[i+3][j]==0 && getState[i+4][j]==0)) {  //checking to see if row can be won/lost or can be set up to win/lose		
-					
-						if(j==0|| (j>0 && (getState[i][j-1]!=0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]!=0))) {
-							System.out.println('e');	
-							if(!loss_avoider.contains(i+3))
-								loss_avoider.add(i+3);
-						}
-						else if(j>0 && getState[i][j-1]!=0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)) {
-							System.out.println('f');
-							if(!loss_creator.contains(i+4) && getState[i+2][j]==opp_color)
-								loss_creator.add(i+4);
-							else if(!bad_setup.contains(i+4) && getState[i+2][j]==AI_color)
-								bad_setup.add(i+4);
-						}
-						else if(j>0 && getState[i][j-1]!=0 && getState[i+3][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+3][j-2]!=0)) {
-							System.out.println('g');
-							if(!loss_creator.contains(i+3) && getState[i+2][j]==opp_color)
-								loss_creator.add(i+3);
-							else if(!bad_setup.contains(i+3) && getState[i+2][j]==AI_color)
-								bad_setup.add(i+3);
-						}
-						else if(j>0 && getState[i][j-1]==0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i][j-2]!=0)) {
-							System.out.println('h');
-							if(!loss_creator.contains(i) && getState[i+2][j]==opp_color)
-								loss_creator.add(i);
-							else if(!bad_setup.contains(i) && getState[i+2][j]==AI_color)
-								bad_setup.add(i);
-						}
-					}
-					
-					if(i>0 && i<g.getNumCols()-3 && getState[i][j]!=0 && getState[i+1][j]==0 && getState[i-1][j]==0 && getState[i+3][j]==0 && getState[i][j]==getState[i+2][j]) { //checking to see if row can be won/lost or can be set up to win/lose	
-						
-						if(j==0|| (j>0 && (getState[i-1][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]!=0))) {
-							System.out.println('i');
-							if(!loss_avoider.contains(i+1))
-								loss_avoider.add(i+1);
-						}
-						else if(j>0 && getState[i-1][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]==0 && (j==1 || j>1 && getState[i+3][j-2]!=0)) {
-							System.out.println('j');
-							if(!loss_creator.contains(i+3) && getState[i][j]==opp_color)
-								loss_creator.add(i+3);
-							else if(!bad_setup.contains(i+3) && getState[i][j]==AI_color)
-								bad_setup.add(i+3);
-						}
-						else if(j>0 && getState[i-1][j-1]!=0 && getState[i+1][j-1]==0 && getState[i+3][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)) {
-							System.out.println('k');
-							if(!loss_creator.contains(i+1) && getState[i][j]==opp_color)
-								loss_creator.add(i+1);
-							else if(!bad_setup.contains(i+1) && getState[i][j]==AI_color)
-								bad_setup.add(i+1);
-						}
-						else if(j>0 && getState[i-1][j-1]==0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]!=0 && (j==1 || j>1 && getState[i-1][j-2]!=0)) {
-							System.out.println('l');
-							if(!loss_creator.contains(i-1) && getState[i][j]==opp_color)
-								loss_creator.add(i-1);
-							else if(!bad_setup.contains(i-1) && getState[i][j]==AI_color)
-								bad_setup.add(i-1);
-						}
-					}
-					
-					if((i==0 || i==1) && getState[i][j]!=0 && getState[i+1][j]==0 && (getState[i+2][j]==getState[i][j] && getState[i+3][j]==0 || (getState[i+3][j]==getState[i][j] && getState[i+2][j]==0))  //checking to see if row can be won/lost or can be set up to win/lose	
-						&& getState[i+4][j]==0 && getState[i+5][j]==getState[i][j]) {
-						
-						if(j==0 || (getState[i+1][j-1]!=0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) && getState[i+4][j-1]!=0)){
-							System.out.println('m');
-							if(!loss_avoider.contains(i+1))
-								loss_avoider.add(i+1);
-							if(!loss_avoider.contains(i+2) && getState[i+2][j]==0)
-								loss_avoider.add(i+2);
-							if(!loss_avoider.contains(i+3) && getState[i+3][j]==0)
-								loss_avoider.add(i+3);
-						}
-						else if(j>0 && getState[i+1][j-1]==0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) 
-							    && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+1][j-2]!=0)){
-							System.out.println('n');
-							if(!loss_creator.contains(i+1) && getState[i][j]==opp_color)
-								loss_creator.add(i+1);
-							else if(!bad_setup.contains(i+1) && getState[i][j]==AI_color)
-								bad_setup.add(i+1);
-						}
-						else if(j>0 && getState[i+1][j-1]!=0 && getState[i+2][j]==0 && getState[i+2][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+2][j-2]!=0)){
-							System.out.println('o');
-							if(!loss_creator.contains(i+2) && getState[i][j]==opp_color)
-								loss_creator.add(i+2);
-							else if(!bad_setup.contains(i+2) && getState[i][j]==AI_color)
-								bad_setup.add(i+2);
-						}
-						else if(j>0 && getState[i+1][j-1]!=0 && getState[i+3][j]==0 && getState[i+3][j-1]==0 && getState[i+4][j-1]!=0 && (j==1 || j>1 && getState[i+3][j-2]!=0)){
-							System.out.println('p');
-							if(!loss_creator.contains(i+3) && getState[i][j]==opp_color)
-								loss_creator.add(i+3);
-							else if(!bad_setup.contains(i+3) && getState[i][j]==AI_color)
-								bad_setup.add(i+3);
-						}
-						else if(j>0 && getState[i+1][j-1]!=0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) 
-							    && getState[i+4][j-1]==0 && (j==1 || j>1 && getState[i+4][j-2]!=0)){
-							System.out.println('q');
-							if(!loss_creator.contains(i+4) && getState[i][j]==opp_color)
-								loss_creator.add(i+4);
-							else if(!bad_setup.contains(i+4) && getState[i][j]==AI_color)
-								bad_setup.add(i+4);
-						}
-					}
-
-					if((i<g.getNumCols()-3 && j<g.getNumRows()-3 && getState[i][j]==0 && getState[i+1][j+1]!=0 && getState[i+1][j+1]==getState[i+2][j+2] 
-						&& getState[i+3][j+3]==0)) {   //two open on left upper diagonal
-						
-						if(i>0 && j>0 && getState[i-1][j-1]==0 && (j==1 || j>1 && getState[i-1][j-2]!=0) && getState[i][j-1]!=0 && getState[i+3][j+2]!=0) {    
-							System.out.println('r' + i);
-							if(!loss_avoider.contains(i))
-								loss_avoider.add(i);
-						}
-						else if(i>0 && j>1 && getState[i-1][j-2]==0 && (j==2 || getState[i-1][j-3]!=0) && getState[i][j-1]!=0 && getState[i+3][j+2]!=0) {
-							System.out.println('s');
-							if(!loss_creator.contains(i-1) && getState[i+1][j+1]==opp_color)
-								loss_creator.add(i-1);
-							else if(!bad_setup.contains(i-1) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i-1);
-						}
-						else if(i>0 && j>0 && getState[i-1][j-1]==0 && (j==1 || j>1 && getState[i-1][j-2]!=0 && getState[i][j-2]!=0) && getState[i][j-1]==0 && getState[i+3][j+2]!=0) {
-							System.out.println('t');
-							if(!loss_creator.contains(i) && getState[i+1][j+1]==opp_color)
-								bad_setup.add(i);
-							else if(!bad_setup.contains(i) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i);
-						}
-						else if(i>0 && (j==1 || j>1 && getState[i-1][j-2]!=0) && getState[i][j-1]!=0 && getState[i+3][j+2]==0 && getState[i+3][j+1]!=0) {
-							System.out.println('u');
-							if(!loss_creator.contains(i+3) && getState[i+1][j+1]==opp_color)
-								loss_creator.add(i+3);
-							else if(!bad_setup.contains(i+3) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i+3);
-						}
-						
-						if((j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]!=0) {    //two open on right upper diagonal
-							System.out.println('v');
-							if(!loss_avoider.contains(i))
-								loss_avoider.add(i);
-						}
-						else if(j>0 && getState[i][j-1]==0 && (j==1 || getState[i][j-2]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]!=0) {
-							System.out.println('w');
-							if(!loss_creator.contains(i) && getState[i+1][j+1]==opp_color)
-								loss_creator.add(i);
-							else if(!bad_setup.contains(i) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i);
-						}
-						else if((j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]==0 && getState[i+3][j+1]!=0 && getState[i+4][j+3]!=0) {
-							System.out.println('x');
-							if(!loss_creator.contains(i+3) && getState[i+1][j+1]==opp_color)
-								loss_creator.add(i+3);
-							else if(!bad_setup.contains(i+3) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i+3);
-						}
-						else if((j==0 || getState[i][j-1]!=0) && getState[i+3][j+2]!=0 && getState[i+4][j+3]==0 && getState[i+4][j+2]!=0) {
-							System.out.println('y');
-							if(!loss_creator.contains(i+4) && getState[i+1][j+1]==opp_color)
-								loss_creator.add(i+4);
-							else if(!bad_setup.contains(i+4) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i+4);
-						}		
-					}
-					
-					if(j<g.getNumRows()-4 && getState[i][j]==0 && getState[i+1][j+1]!=0 && getState[i+2][j+2]==0   //upper diagonal middle open
-					   && getState[i+1][j+1]==getState[i+3][j+3] && getState[i+4][j+4]==0) {
-
-						if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]!=0) {
-							System.out.println('z');
-							if(!loss_avoider.contains(i+2))
-								loss_avoider.add(i+2);
-						}
-						else if(j>0 && getState[i][j-1]==0 && (j==1 || getState[i][j-2]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]!=0) {
-							System.out.println("aa");
-							if(!loss_creator.contains(i) && getState[i+1][j+1]==opp_color)
-								loss_creator.add(i);
-							else if(!bad_setup.contains(i) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i);
-						}
-						else if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]==0 && getState[i+2][j]!=0 && getState[i+4][j+3]!=0) {
-							System.out.println("bb");
-							if(!loss_creator.contains(i+2) && getState[i+1][j+1]==opp_color)
-								loss_creator.add(i+2);
-							else if(!bad_setup.contains(i+2) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i+2);
-						}
-						else if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]==0 && getState[i+4][j+2]!=0) {
-							System.out.println("cc");
-							if(!loss_creator.contains(i+4) && getState[i+1][j+1]==opp_color)
-								loss_creator.add(i+4);
-							else if(!bad_setup.contains(i+4) && getState[i+1][j+1]==AI_color)
-								bad_setup.add(i+4);
-						}		
-						
-					}
-					
-					if(j>2 && getState[i][j]==0 && getState[i+1][j-1]!=0 && getState[i+1][j-1]==getState[i+2][j-2] && getState[i+3][j-3]==0) {
-						
-						if(i>0 && (j==3 || getState[i+3][j-4]!=0) && j<g.getNumRows()-1 && getState[i-1][j]!=0 && getState[i][j-1]!=0) {  //lower diagonal two open left
-							System.out.println("dd");
-							if(!loss_avoider.contains(i))
-								loss_avoider.add(i);
-						}
-						else if(i>0 && j<g.getNumRows()-1 && getState[i-1][j]==0 && getState[i-1][j-1]!=0 && getState[i-1][j-1]!=0 && getState[i][j-1]!=0 && (j==3 || getState[i+3][j-4]!=0)) {
-							System.out.println("ee");
-							if(!loss_creator.contains(i-1) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i-1);
-							else if(!bad_setup.contains(i-1) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i-1);
-						}
-						else if(i>0 && j<g.getNumRows()-1 && getState[i-1][j]!=0 && getState[i][j-1]==0 && getState[i][j-2]!=0 && (j==3 || getState[i+3][j-4]!=0)) {
-							System.out.println("ff");
-							if(!loss_creator.contains(i) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i);
-							else if(!bad_setup.contains(i) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i);
-						}
-						else if(i>0 && j>3 && j<g.getNumRows()-1 && getState[i-1][j]!=0 && getState[i-1][j+1]==0 && getState[i][j-1]!=0 && getState[i+3][j-4]==0 && (j==4 || getState[i+3][j-5]!=0)) {
-							System.out.println("gg");
-							if(!loss_creator.contains(i+3) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i+3);
-							else if(!bad_setup.contains(i+3) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i+3);
-						}
-						
-						if(i<3 && j>3 && getState[i][j-1]!=0 && getState[i+3][j-4]!=0 && getState[i+4][j-4]==0 && (j==4 || getState[i+4][j-5]!=0)) {   //lower diagonal two open right
-							System.out.println("hh");
-							if(!loss_avoider.contains(i+3))
-								loss_avoider.add(i+3);
-						}
-						else if(i<3 && j>3 && getState[i][j-1]==0 && getState[i][j-2]!=0 && getState[i+3][j-4]!=0 && getState[i+4][j-4]==0 && (j==4 || getState[i+4][j-5]!=0)) {
-							System.out.println("ii");
-							if(!loss_creator.contains(i) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i);
-							else if(!bad_setup.contains(i) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i);
-						}
-						else if(i<3 && j>3 && getState[i][j-1]!=0 && getState[i+3][j-4]==0 && getState[i+4][j-4]==0 && (j==4 || getState[i+3][j-5]!=0 && getState[i+4][j-5]!=0)) {
-							System.out.println("jj");
-							if(!loss_creator.contains(i+3) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i+3);
-							else if(!bad_setup.contains(i+3) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i+3);
-						}
-						else if(j>4 && getState[i][j-1]!=0 && getState[i+3][j-4]!=0 && getState[i+4][j-5]==0) {
-							System.out.println("kk");
-							if(!loss_creator.contains(i+4) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i+4);
-							else if(!bad_setup.contains(i+4) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i+4);
-						}	
-					}
-					
-					if(i<3 && j>3 && getState[i][j]==0 && getState[i+1][j-1]!=0 && getState[i+1][j-1]==getState[i+3][j-3] && getState[i+2][j-2]==0 && getState[i+4][j-4]==0) {  //lower diagonal middle open
-						
-						if(getState[i][j-1]!=0 && getState[i+2][j-3]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
-							System.out.println("ll");
-							if(!loss_avoider.contains(i+2))
-								loss_avoider.add(i+2);
-						}
-						else if(getState[i][j-1]==0 && getState[i][j-2]!=0 && getState[i+2][j-3]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
-							System.out.println("mm");
-							if(!loss_creator.contains(i) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i);
-							else if(!bad_setup.contains(i) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i);
-						}
-						else if(getState[i][j-1]!=0 && getState[i+2][j-3]==0 && getState[i+2][j-4]!=0 && (j==4 || getState[i+4][j-5]!=0)) {
-							System.out.println("nn");
-							if(!loss_creator.contains(i+2) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i+2);
-							else if(!bad_setup.contains(i+2) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i+2);
-						}
-						else if(j>4 &getState[i][j-1]!=0 && getState[i+2][j-3]!=0 && getState[i+4][j-5]==0) {
-							System.out.println("oo");
-							if(!loss_creator.contains(i+4) && getState[i+1][j-1]==opp_color)
-								loss_creator.add(i+4);
-							else if(!bad_setup.contains(i+4) && getState[i+1][j-1]==AI_color)
-								bad_setup.add(i+4);
-						}
-					}				
-				}
-			}  
-		}
-		
-		public void winningColumnCreator(int column, int row, boolean opp_turn) {
-			
-			HashMap<Integer, Integer> opp_winning_moves = new HashMap<>();
-			HashMap<Integer, Integer> ai_winning_moves = new HashMap<>();
-			four_map = fourMap();
-			boolean opp_can_win = false;
-			int empty_squares;
-
-			for(int i=0; i<g.getNumCols(); i++) {
-				
-				empty_squares=0;
-				
-				for(int j=0; j<g.getNumRows()-1; j++) {
-					
-					if(getState[i][j]==0)
-						empty_squares++;
-					
-					if(!not_winning_column.contains(i)) {
-					
-						if(four_map[i][j]==AI_color && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2)) {
-							
-							
-							System.out.println("fourmap + here " + i);
-							for(int ii=5; ii>=0; ii--) {
-								for(int jj = 0;jj<g.getNumCols();jj++) {
-									if(four_map[jj][ii] == -1)
-										System.out.print(" " + four_map[jj][ii]);
-									else
-										System.out.print( "  " + four_map[jj][ii]);
-								}
-								System.out.println("");
-							}
-							System.out.println("");	
-						
-							
-							
-							
-							for(int num=0; num<j; num++) {
-								if(four_map[i][num]==opp_color || four_map[i][num]==2)
-									opp_can_win = true;			
-							}
-							if(!AI_winning_column.contains(column) && !opp_can_win) {
-								System.out.println("found AI winning column " + column );
-								
-								AI_winnable_columns.put(column, empty_squares);
-							}
-						}
-						else if(four_map[i][j]==opp_color && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2)) {
-							
-							for(int num=0; num<j; num++) {
-								if(four_map[i][j]==opp_color || four_map[i][num]==2)
-									opp_can_win = true;			
-							}
-							if(!opp_winning_column.contains(column) && !opp_can_win) {
-								System.out.println("found opp winning column " + column );
-								
-								opp_winnable_columns.put(column, empty_squares);
-							}
-						}
-						if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
-							
-							if(!ai_winning_moves.containsKey(column))
-								ai_winning_moves.put(column, 1);
-							else {
-								int count = ai_winning_moves.get(column);
-								ai_winning_moves.put(column, count+1);
-							}
-						}
-						else if(four_map[i][j]==opp_color && (j==0 || getState[i][j-1]!=0)) {
-							
-							if(!opp_winning_moves.containsKey(column))
-								opp_winning_moves.put(column, 1);
-							else {
-								int count = opp_winning_moves.get(column);
-								opp_winning_moves.put(column, count+1);
-							}
-						}	
-					}
-				}					    
-			}
-			
-			for(int num=0; num<g.getNumCols(); num++){
-				if(!AI_winning_column.contains(column) && (ai_winning_moves.containsKey(num) && ai_winning_moves.get(num)>1)){ 
-					System.out.println("qqqqqqqqqqqqqqqq " +column );
-					AI_winning_column.add(column);
-				}
-				if(!opp_winning_column.contains(column) && (opp_winning_moves.containsKey(num) && opp_winning_moves.get(num)>1)) {
-					System.out.println("qwqwqwqwqwqwq " +column );
-					opp_winning_column.add(column);
-				}
-			}
-		}
-		
-		public void losingBoardCreator(int column, int row){
-			
-			HashMap<Integer, Integer> opp_winning_creator = new HashMap<>();
-			HashMap<Integer, Integer> ai_winning_creator = new HashMap<>();
-			int[][] four_map;
-			int[] arr = {-1,1};
-
-			for(int c=0; c<g.getNumCols(); c++) {
-				
-				int empty_squares = 0;
-				boolean AI_can_win = false;
-				
-				for(int r=0; r<g.getNumRows(); r++) {
-					
-					if(getState[c][r]==0) {
-						empty_squares++;
-					}
-					
-					if(getState[c][r]==0 && (r==0||getState[c][r-1]!=0)) {
-						opp_winning_creator = new HashMap<>();
-						ai_winning_creator = new HashMap<>();
-						
-						getState[c][r] = opp_color;
-						four_map = fourMap();
-						
-						for(int i=0; i<g.getNumCols(); i++) {
-							for(int j=0; j<g.getNumRows()-1; j++) {
-								
-								if(four_map[i][j]==opp_color && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2) 
-								   && !loss_creator.contains(column)) {
-									
-									
-									for(int num=0; num<j; num++) {
-										if(four_map[i][num]==AI_color)
-											AI_can_win = true;
-									}
-									
-
-									
-									if(!AI_can_win) {
-										if(!AI_winnable_columns.isEmpty()) {
-											for(int index: winning_index) {
-												if(empty_squares<AI_winnable_columns.get(index)) {
-													System.out.println("fssfsfsf " + column);	
-													System.out.println("c " + c);	
-													System.out.println("r " + r);	
-													loss_creator.add(column);
-												}
-												
-											}
-										}
-										else {
-											loss_creator.add(column);
-											System.out.println("Winnnnnnable columns " + AI_winnable_columns);
-										}
-									}
-									
-								}
-								
-								if(four_map[i][j]==2 && four_map[i][j+1]==opp_color && !unwise_moves.contains(column)) {
-									System.out.println(c + " in here " + i);
-									unwise_moves.add(column);
-								}
-								
-								/*
-								
-								if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
-									//System.out.println("");
-									//System.out.println("aicol " + column);
-									//System.out.println("airow " + row);
-									
-									if(!ai_winning_creator.containsKey(column))
-										ai_winning_creator.put(column, 1);
-									else {
-										int count = ai_winning_creator.get(column);
-										ai_winning_creator.put(column, count+1);
-									}
-								}
-								*/
-								
-								if(four_map[i][j]==opp_color && (j==0 || getState[i][j-1]!=0)) {
-									
-									if(!opp_winning_creator.containsKey(column))
-										opp_winning_creator.put(column, 1);
-									else {
-										int count = opp_winning_creator.get(column);
-										opp_winning_creator.put(column, count+1);
-									}
-								}	
-							}
-						}
-						getState[c][r] = 0;
-					
-
-						for(int col_num=0; col_num<g.getNumCols(); col_num++){
-							if((!ai_winning_creator.isEmpty() && ai_winning_creator.containsKey(col_num) && ai_winning_creator.get(col_num)>1) 
-							    || (!opp_winning_creator.isEmpty() && opp_winning_creator.containsKey(col_num) && opp_winning_creator.get(col_num)>1)) { 
-								
-								if(!loss_creator.contains(col_num)) {
-									loss_creator.add(col_num);
-									System.out.println("sssssssss " + col_num);
-								}
-							}
-						}
-					
-					}
-				}
-			}
-		}
-		
 		public void threeInARow(int column, int row, boolean opp_turn, ArrayList<Integer> best_unblockable_arr, ArrayList<Integer> ok_unblockable_arr, ArrayList<Integer> blockable_arr) {	      //sees whether there is an opportunity to make three in a row or block opponent from doing so
 			  
 			HashMap<Integer, Integer> three_unblockable = new HashMap<>();    //HashMap thats hold columns that make three in a row that aren't blockable and rows of winning move
@@ -1447,9 +1401,11 @@ public class JackMaloonAI implements CFPlayer{
 		}
 		else {
 			for(int col=0; col<g.getNumCols(); col++) { 
-				if(false) {
+				if(!g.fullColumn(col)) {
 					g.play(col);
+					System.out.println("");
 					System.out.println("played " + col);
+					System.out.println("");
 					if(!g.isRedTurn())
 						ai_num = 1;
 				
@@ -1457,7 +1413,9 @@ public class JackMaloonAI implements CFPlayer{
 						for(int sim_move=0; sim_move<10; sim_move++) {
 							index = columnQuality(g, new moveFinder(g), false, new ArrayList<Integer>(), new ArrayList<Integer>());
 							g.play(index);
+							System.out.println("");
 							System.out.println("sim " + index);
+							System.out.println("");
 							//System.out.println("");
 							//System.out.println("");
 							moves_played.add(index);
