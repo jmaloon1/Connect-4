@@ -66,7 +66,7 @@ public class CFGame {
 	  
     	played = false;
 	  
-    	if(column<0 || column>=num_cols || !notFullColumn(column)) 
+    	if(column<0 || column>=num_cols || fullColumn(column)) 
     		return false;
 	  
     	for(int row=0; row<num_rows; row++) {
@@ -223,13 +223,13 @@ public class CFGame {
     /**
      * This method tells whether a column is full or not.
      * @param column: column number
-     * @return boolean: true if column exists and is not full, false otherwise
+     * @return boolean: true if column doesn't exist or is full, false otherwise
     */ 
-    public boolean notFullColumn(int column) {
+    public boolean fullColumn(int column) {
 	 
     	if(column<0 || column>=num_cols || state[column][num_rows-1]!=0) 
-    		return false;
+    		return true;
 	   
-    	return true;
+    	return false;
     }
 }

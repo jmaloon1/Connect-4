@@ -14,14 +14,13 @@ public class RandomAI implements CFPlayer{
     */
 	public int nextMove(CFGame g) {
 		
-		int[][] gameState = g.getState();
 		Random rand = new Random();
 		int col = rand.nextInt(g.getNumCols());
-		
-		while(gameState[col][g.getNumRows()-1]!=0 && !g.isGameOver()) {		//checks to see whether the move will be playable
+		while(g.fullColumn(col) && !g.isGameOver()) {		//checks to see whether the move will be playable
 			
 			col = rand.nextInt(g.getNumCols());		//re-randomizes variable until it makes a legal move
-		}	
+		}
+		
 		return col; 
 	}
 	

@@ -53,7 +53,6 @@ public class GUICF extends CFGame{
 	     * @return void
 	    */
 		public void actionPerformed(ActionEvent e){
-
 			if(ai1_turn) {
 				int m1 = ai1.nextMove(this);
 				playGUI(m1);
@@ -118,10 +117,10 @@ public class GUICF extends CFGame{
 	CFPlayer ai1;								//instance of a certain AI interface
 	CFPlayer ai2;								//instance of a certain AI interface
 	
-	JPanel buttonPanel = new JPanel();			//panels for the GUI
+	JPanel button_panel = new JPanel();			//panels for the GUI
 	JButton[] buttons;							//array of buttons for the GUI
-	JButton gameButton;							//gameButton that is used for AI vs. AI game
-	JButton gameOver;							//button that shows game is over and who the winner is
+	JButton game_button;							//gameButton that is used for AI vs. AI game
+	JButton game_over;							//button that shows game is over and who the winner is
 	JButton replay;								//button that will start a new game if clicked
 	
 	
@@ -133,15 +132,15 @@ public class GUICF extends CFGame{
 		human_vs_human = true;
 		this_board = new GameBoard();
 		
-		buttonPanel = new JPanel();
-		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
-		buttonPanel.setLayout(new GridLayout(1, getNumCols()));
+		button_panel = new JPanel();
+		this_board.pane.add(button_panel, BorderLayout.NORTH);
+		button_panel.setLayout(new GridLayout(1, getNumCols()));
 		buttons = new JButton[getNumCols()]; 		//sets up buttons for the user to use when playing
 	
 		for(int i=0; i<getNumCols(); i++) {
 			buttons[i] = new JButton("\u2193");
 			buttons[i].addActionListener(new ButtonListener(i));		//gives buttons functionality when playing
-			buttonPanel.add(buttons[i]);	 
+			button_panel.add(buttons[i]);	 
 		}
 		
 	}
@@ -157,19 +156,19 @@ public class GUICF extends CFGame{
 		this_board = new GameBoard();
 		Random rand = new Random();
 		
-		buttonPanel = new JPanel();
-		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
-		buttonPanel.setLayout(new GridLayout(1, getNumCols()));
+		button_panel = new JPanel();
+		this_board.pane.add(button_panel, BorderLayout.NORTH);
+		button_panel.setLayout(new GridLayout(1, getNumCols()));
 		buttons = new JButton[getNumCols()]; 		//sets up buttons for the user to use when playing
 	
 		for(int i=0; i<getNumCols(); i++) {
 			
 			buttons[i] = new JButton("\u2193");
 			buttons[i].addActionListener(new ButtonListener(i));		//gives buttons functionality when playing
-			buttonPanel.add(buttons[i]);	 
+			button_panel.add(buttons[i]);	 
 		}
 		
-		if(rand.nextInt(2) == 0) {		//plays move if ai is determined to go first via random number generation		
+		if(rand.nextInt(2)==0) {		//plays move if ai is determined to go first via random number generation		
 			first_turn = true;
 			playGUI(this.ai1.nextMove(this));	
 		}
@@ -184,17 +183,18 @@ public class GUICF extends CFGame{
 		
 		this.ai1 = ai1;
 		this.ai2 = ai2;
+		AI_vs_AI = true;
 		this_board = new GameBoard();
 		Random rand = new Random();
 		
-		buttonPanel = new JPanel();
-		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
-		buttonPanel.setLayout(new GridLayout(1,1));
-		gameButton = new JButton("Play"); 
-		gameButton.addActionListener(new aiButtonListener());		//'play' button created with functionality to make a move in the game
-		buttonPanel.add(gameButton);
+		button_panel = new JPanel();
+		this_board.pane.add(button_panel, BorderLayout.NORTH);
+		button_panel.setLayout(new GridLayout(1,1));
+		game_button = new JButton("Play"); 
+		game_button.addActionListener(new aiButtonListener());		//'play' button created with functionality to make a move in the game
+		button_panel.add(game_button);
 	
-		if(rand.nextInt(2) == 0) 		//determines which ai goes first randomly
+		if(rand.nextInt(2)==0) 		//determines which ai goes first randomly
 			ai1_turn = true;
 	}
 	
@@ -207,59 +207,46 @@ public class GUICF extends CFGame{
 	private boolean playGUI (int col) {
 
 		getState = getState();	
-		if(col<0 || col>=getNumCols() || getState[col][getNumRows()-1]!=0) 	//if column is full, no move is played
+		if(col<0 || col>=getNumCols() || fullColumn(col)) 	//if column is full, no move is played
 			return false;
 		
 		move_played = false;
 		play(col);		//plays move so logic behind game is updated
 		
 		for(int row=0; row<getNumRows(); row++) {		//paints square that is most recently played either red or black depending on who's turn it is
-			  if(getState[col][row] == 0) {	
+			  if(getState[col][row]==0) {	
 				  if(!isRedTurn()) { 
 					  this_board.paint(col,row,1);
 					  move_played = true;  
 				  }
 				  else if(isRedTurn() && !move_played) 
-					  this_board.paint(col,row,2);	
+					  this_board.paint(col,row,-1);	
 				  
-				  if(isGameOver() && isWinner()) 			//checks if there is a winner			
-						winnerButton();						//calls the button that replaces game button(s) to display the winner and close the game
+				  if(isGameOver() && isWinner()) 					
+						winnerButton();						
 
-					if(isGameOver() && !isWinner()) 		//checks to see if the game is a draw
-						drawButton();						//calls the button that replaces game button(s) to display "draw" and close the game
+				  if(isGameOver() && !isWinner()) 		
+					  drawButton();						
 					
-					if(human_vs_AI && !first_turn) {		//if a human is playing, plays an ai move
-						if(!isGameOver() && move_worked && !ai_played) {		//plays ai move
-							ai_played = true;
-							playGUI(ai1.nextMove(this));
-						}	
-					}
-					else if(human_vs_human && !first_turn) {		//if a human is playing, plays an ai move
-						if(!isGameOver() && move_worked && !ai_played) {		//plays ai move
-							
-						}	
-					}
+				  if(human_vs_AI && !first_turn) {		//if a human is playing, plays an ai move
+					  if(!isGameOver() && move_worked && !ai_played) {		//plays ai move
+					      ai_played = true;
+						  playGUI(ai1.nextMove(this));
+					  }	
+				  }
+				  
 				  return true;
 			  }
 		}
 		return true;
 	}
 	
-
-	private void tempPrint() {					//prints the board to the console
-		
-		int x[][] = this.getState();
-		
-		for(int i=5; i >= 0; i--) {
-			for(int j = 0;j<getNumCols();j++) {
-				System.out.print(x[j][i] + "  ");
-			}
-			System.out.println("");
-		}
-		System.out.println("");
-	}
-	
-	private void winnerButton() {		//creates a button with the winner's name on it to replace game button(s)
+	/**
+     * This method makes a button that will display the winner and allow player to exit game or play new game 
+     * @param none
+     * @return void
+    */
+	private void winnerButton() {
 		
 		if(human_vs_AI || human_vs_human) {
 			for(int i = 0; i<getNumCols(); i++) {
@@ -267,32 +254,42 @@ public class GUICF extends CFGame{
 			}
 		}
 		else
-			gameButton.setVisible(false);
+			game_button.setVisible(false);
 		
-		buttonPanel= new JPanel();			
-		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
-		buttonPanel.setLayout(new GridLayout(1,2));
+		button_panel= new JPanel();			
+		this_board.pane.add(button_panel, BorderLayout.NORTH);
+		button_panel.setLayout(new GridLayout(1,2));
 		winnerName();										//creates a button with winner's name on it
-		gameOver.addActionListener(new CloseListener());		//adds functionality to close window when 'game over' button is pressed
-		buttonPanel.add(gameOver);
-		buttonPanel.add(replayButton());
+		game_over.addActionListener(new CloseListener());		//adds functionality to close window when 'game over' button is pressed
+		button_panel.add(game_over);
+		button_panel.add(replayButton());
 	}
 	
-	private void drawButton() {		//creates a button if the game is a draw to display this and close the window. Works similarly to 'winnerButton'
+	/**
+     * This method makes a button that will show a draw occurred 
+     * @param none
+     * @return void
+    */
+	private void drawButton() {
 		
 		for(int i = 0; i<getNumCols(); i++) {
 			
 			buttons[i].setVisible(false); 
 		}
-		buttonPanel= new JPanel();
-		this_board.pane.add(buttonPanel, BorderLayout.NORTH);
-		buttonPanel.setLayout(new GridLayout(1,2));
+		button_panel= new JPanel();
+		this_board.pane.add(button_panel, BorderLayout.NORTH);
+		button_panel.setLayout(new GridLayout(1,2));
 		buttons[0] = new JButton("Game is Over! Draw");
 		buttons[0].addActionListener(new CloseListener());
-		buttonPanel.add(buttons[0]);
-		buttonPanel.add(replayButton());
+		button_panel.add(buttons[0]);
+		button_panel.add(replayButton());
 	}
 	
+	/**
+     * This method makes a button that will allow user to start new game 
+     * @param none
+     * @return void
+    */
 	private JButton replayButton() {		//makes a button to display who the winner is
 		
 		replay = new JButton("Click to play a new Game");
@@ -301,39 +298,55 @@ public class GUICF extends CFGame{
 		return replay;
 	}
 	
-	void winnerName() {		//makes a button to display who the winner is
+	/**
+     * This method creates text that will show in the winner Button if there is a winner
+     * @param none
+     * @return void
+    */
+	void winnerName() {
 		
 		if(human_vs_AI) {
 			if(ai_played) 
-				gameOver = new JButton("Game is Over! " + ai1.getName() + " Wins. Click Here to Exit.");
+				game_over = new JButton("Game is Over! " + ai1.getName() + " Wins. Click Here to Exit.");
 				
 			else
-				gameOver = new JButton("Game is Over! You Win. Click Here to Exit.");
+				game_over = new JButton("Game is Over! You Win. Click Here to Exit.");
 		}
 		else if(human_vs_human) {
-			if(ai_played) 
-				gameOver = new JButton("Game is Over! You Win. Click Here to Exit.");
+			if(!isRedTurn()) 
+				game_over = new JButton("Game is Over! Red Wins. Click Here to Exit.");
 				
 			else
-				gameOver = new JButton("Game is Over! You Win. Click Here to Exit.");
+				game_over = new JButton("Game is Over! Black Wins. Click Here to Exit.");
+		}
+		else if(AI_vs_AI){
+			if(ai1_turn) 
+				game_over = new JButton("Game is Over! " + ai1.getName() + " Wins. Click Here to Exit.");
+				
+			else
+				game_over = new JButton("Game is Over! " + ai2.getName() + " Wins. Click Here to Exit.");
 		}
 		else {
-			
-			if(ai1_turn) 
-				gameOver = new JButton("Game is Over! " + ai1.getName() + " Wins. Click Here to Exit.");
-				
-			else
-				gameOver = new JButton("Game is Over! " + ai2.getName() + " Wins. Click Here to Exit.");
-		}		
+			game_over = new JButton("Error");
+		}
 	}	
+	
+	/**
+     * Inner class that sets up GUI board and contains logic behind certain squares being certain colors 
+     * @param none
+     * @return void
+    */
+	private class GameBoard extends javax.swing.JPanel {
 		
-	private class GameBoard extends javax.swing.JPanel {		//sets up empty game board
+		JFrame frame = new JFrame("Connect 4");								//creates a frame for the GUI
+		Container pane = frame.getContentPane();							//creates pane for the GUI
+		JPanel board = new JPanel();										//created a JPanel for the GUI
+		JPanel panel_arr[][] = new JPanel[getNumCols()][getNumRows()];		//creates array of panels to represent the game squares
 		
-		JFrame frame = new JFrame("Connect 4");				//creates a frame for the GUI
-		Container pane = frame.getContentPane();
-		JPanel board = new JPanel();
-		JPanel panelArr[][] = new JPanel[getNumCols()][getNumRows()];	//creates array of panels to represent the game squares
-		
+		/**
+	     * This constructor sets up the GUI game board
+	     * @param none
+	    */
 		private GameBoard () {
 			
 			frame.setSize(1000, 700);
@@ -346,22 +359,27 @@ public class GUICF extends CFGame{
 			for(int i = getNumRows()-1; i>=0; i--) {		//Format panels to make the game board look good
 				for(int j = 0;j<getNumCols(); j++){
 				
-					panelArr[j][i] = new JPanel();
-					panelArr[j][i].setBorder(BorderFactory.createLineBorder(Color.black));
-					panelArr[j][i].add(new JLabel());
-					panelArr[j][i].setBackground(Color.WHITE);
-					board.add(panelArr[j][i]);
+					panel_arr[j][i] = new JPanel();
+					panel_arr[j][i].setBorder(BorderFactory.createLineBorder(Color.black));
+					panel_arr[j][i].add(new JLabel());
+					panel_arr[j][i].setBackground(Color.WHITE);
+					board.add(panel_arr[j][i]);
 				}
 			}
 		}
 		
-		private void paint (int x, int y, int color) {		//paints a given square a certain color
+		/**
+	     * This method paints squares red or black depending on who's turn it is and qhat column is played 
+	     * @param none
+	     * @return void
+	    */
+		private void paint (int x, int y, int color) {	
 
-			if(color == 1) 				
-				panelArr[x][y].setBackground(Color.RED);
+			if(color==1) 				
+				panel_arr[x][y].setBackground(Color.RED);
 			
 			else 
-				panelArr[x][y].setBackground(Color.BLACK);
+				panel_arr[x][y].setBackground(Color.BLACK);
 	
 		}
 	}

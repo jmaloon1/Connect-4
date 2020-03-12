@@ -205,7 +205,7 @@ public class ConsoleCF extends CFGame{
 			if(!isWinner() )
 				return "Draw";
 			else if(isRedTurn() && ai1_first || !isRedTurn() && !ai1_first)
-				return "AI lost";
+				return "non-AI";
 			else
 				return ai1.getName();
 		}
@@ -223,7 +223,7 @@ public class ConsoleCF extends CFGame{
 		
 		int x[][];
 		
-		for(int i = 5;i>=0;i--) {
+		for(int i=5; i>=0; i--) {
 			for(int j = 0;j<getNumCols();j++) {
 				x = getState();
 				if(x[j][i] == -1)

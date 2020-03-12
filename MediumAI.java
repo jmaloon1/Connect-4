@@ -36,7 +36,7 @@ public class MediumAI implements CFPlayer{
 			
 			winningMove = false;   //true if a winning move is present
 			  
-			if(column<0 || column>=g.getNumCols() || !g.notFullColumn(column)) { 	//if move cannot be made
+			if(column<0 || column>=g.getNumCols() || g.fullColumn(column)) { 	//if move cannot be made
 				if(!illegal_moves.contains(column))
 					illegal_moves.add(column);
 				return false;
