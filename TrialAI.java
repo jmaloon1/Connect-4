@@ -1,5 +1,5 @@
-package hw4;
-//make it so bad move is involved with touches
+package connect4;
+
 import java.util.*;
 
 public class TrialAI implements CFPlayer{
@@ -665,12 +665,9 @@ public class TrialAI implements CFPlayer{
 }
 
 /*
-
-
 package hw4;
 //make it so bad move is involved with touches
 import java.util.*;
-
 public class TrialAI implements CFPlayer{
 	
 	private class moveFinder{		//inner class that doesn't actually play moves, but simulates moves to see if there is a winning one or one to prevent the opponent from winning
@@ -734,7 +731,6 @@ public class TrialAI implements CFPlayer{
 			initial_four_map = fourMap();
 			
 			for(int row=g.getNumRows()-1; row>=0; row--) { 		//simulates move and what number will be played on move(1 or -1)
-
 				if(getState[column][row] == 0) {	
 						  
 				    if((g.isRedTurn() && !opp_turn) || (!g.isRedTurn() && opp_turn))
@@ -797,7 +793,6 @@ public class TrialAI implements CFPlayer{
 				}
 			}
 		}
-
 		public void isMoveWinning(int column, int row) {	//sees whether there is a winning move
 			  
 			for(int i=0; i<g.getNumCols(); i++) {
@@ -845,7 +840,6 @@ public class TrialAI implements CFPlayer{
 									   || col+3<g.getNumCols() && getState[col][row]==getState[col+1][row] && getState[col][row]==getState[col+2][row] && getState[col][row]==getState[col+3][row]
 									   || row+3<g.getNumRows() &&  col+3<g.getNumCols() && getState[col][row]==getState[col+1][row+1] && getState[col][row]==getState[col+2][row+2] && getState[col][row]==getState[col+3][row+3]
 									   || row-3>=0 && col+3<g.getNumCols() && getState[col][row]==getState[col+1][row-1] && getState[col][row]==getState[col+2][row-2] && getState[col][row]==getState[col+3][row-3])) {
-
 										  if(temp_array[i][j]==move)
 											  continue;
 										  else if(temp_array[i][j]==0)
@@ -862,7 +856,6 @@ public class TrialAI implements CFPlayer{
 			  }
 			  return temp_array;
 		}
-
 		public void avoidLoss() {	//sees whether a row be guaranteed 4 in a row in 2 turns
 			
 			for(int i=0; i<g.getNumCols()-4; i++) {
@@ -1001,7 +994,6 @@ public class TrialAI implements CFPlayer{
 								unwise_moves.add(i+4);
 						}
 					}
-
 					if((i<g.getNumCols()-3 && j<g.getNumRows()-3 && getState[i][j]==0 && getState[i+1][j+1]!=0 && getState[i+1][j+1]==getState[i+2][j+2] 
 						&& getState[i+3][j+3]==0)) {   //two open on left upper diagonal
 						
@@ -1062,7 +1054,6 @@ public class TrialAI implements CFPlayer{
 					
 					if(j<g.getNumRows()-4 && getState[i][j]==0 && getState[i+1][j+1]!=0 && getState[i+2][j+2]==0   //upper diagonal middle open
 					   && getState[i+1][j+1]==getState[i+3][j+3] && getState[i+4][j+4]==0) {
-
 						if((j==0 || getState[i][j-1]!=0) && getState[i+2][j+1]!=0 && getState[i+4][j+3]!=0) {
 							//System.out.println('z');
 							if(!loss_avoider.contains(i+2))
@@ -1191,7 +1182,6 @@ public class TrialAI implements CFPlayer{
 			HashMap<Integer, Integer> ai_winning_moves = new HashMap<>();
 			
 			int[][] four_map = fourMap();
-
 			for(int i=0; i<g.getNumCols(); i++) {
 				for(int j=0; j<g.getNumRows()-1; j++) {
 					
@@ -1244,7 +1234,6 @@ public class TrialAI implements CFPlayer{
 			HashMap<Integer, Integer> ai_winning_creator = new HashMap<>();
 			int[][] four_map;
 			int[] arr = {-1,1};
-
 			for(int c=0; c<g.getNumCols(); c++) {
 				for(int r=0; r<g.getNumRows()-1; r++) {
 					if(getState[c][r]==0 && (r==0||getState[c][r-1]!=0) && !winning_column.contains(c)) {
@@ -1307,7 +1296,6 @@ public class TrialAI implements CFPlayer{
 						}
 						getState[c][r] = 0;
 					
-
 						for(int col_num=0; col_num<g.getNumCols(); col_num++){
 							if((!ai_winning_creator.isEmpty() && ai_winning_creator.containsKey(col_num) && ai_winning_creator.get(col_num)>1) 
 							    || (!opp_winning_creator.isEmpty() && opp_winning_creator.containsKey(col_num) && opp_winning_creator.get(col_num)>1)) { 
@@ -1381,7 +1369,6 @@ public class TrialAI implements CFPlayer{
 							three_unblockable.add(column);
 						else 
 							three_blockable.add(column);						
-
 						if(three_potential_map[column][row]==0)
 							three_potential_map[column][row] = getState[i][j];
 						else if(three_potential_map[column][row]!=getState[i][j])
@@ -1631,9 +1618,7 @@ public class TrialAI implements CFPlayer{
 		moveFinder m = new moveFinder(g);
 		
 		int[] quality_array = {0,1,2,3,2,1,0}; 		//Assigning starting values to quality array that skew towards the center. This array will  determine which col to play
-
 		m.findWinningColumn();      //Looks to see if there is a column that can be played that guarantees win
-
 		for(int col=0; col<g.getNumCols(); col++) {   //plays winning move if possible
 			if(m.pretendPlay(col, false)) {
 				if(m.winning_move) 
@@ -1740,7 +1725,6 @@ public class TrialAI implements CFPlayer{
 			//System.out.println("");
 		}
 		//System.out.println("");
-
 		
 		for(int i=0; i<quality_arr.length; i++) { 
 			//System.out.print(quality_arr[i] + " ");
@@ -1751,7 +1735,6 @@ public class TrialAI implements CFPlayer{
 					duplicate_max.clear();
 			}
 			else if(quality_arr[i] == max) {
-
 				duplicate_max.add(i);
 				if(duplicate_max.size() == 1) 
 					duplicate_max.add(max_element);
@@ -1769,7 +1752,6 @@ public class TrialAI implements CFPlayer{
 		return max_element;
 	}
 	
-
 	public String getName() {
 		
 		return "Trial AI";

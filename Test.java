@@ -1,13 +1,11 @@
-package hw4;
-
+package connect4;
 
 import java.util.Scanner;
-import hw4.CFPlayer;
-import hw4.RandomAI;
-
-import hw4.JackMaloonAI;
-import hw4.ConsoleCF;
-import hw4.GUICF;
+import connect4.CFPlayer;
+import connect4.RandomAI;
+import connect4.JackMaloonAI;
+import connect4.ConsoleCF;
+import connect4.GUICF;
 
 /**
  * This class is where the games are created and tested. Main function is in this class
@@ -30,7 +28,7 @@ public class Test {
     	} 
     	else if (gameMode==2) {		//starts a console game with ai vs. ai, checks to see is personal ai wins and returns win probability with monte carlo simulation
   
-			CFPlayer ai1 = new JackMaloonAI(true);
+			CFPlayer ai1 = new JackMaloonAI(false);
 			CFPlayer ai2 = new TrialAI();
 			int n = 100;
 			int ai1winCount = 0;
@@ -75,7 +73,3 @@ public class Test {
     	} 
     }
 }
-
-//simulate move
-//give opponent 3 blockable if possible
-//block it

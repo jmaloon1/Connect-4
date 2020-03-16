@@ -1,4 +1,4 @@
-package hw4;
+package connect4;
 
 import javax.swing.*;
 import java.awt.*;

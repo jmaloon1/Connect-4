@@ -1,4 +1,4 @@
-package hw4;
+package connect4;
 
 /**
  * This interface contains two methods that will be used by other classes:

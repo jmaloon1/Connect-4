@@ -1,4 +1,4 @@
-package hw4;
+package connect4;
 
 /**
  * This class holds the logic behind the game. Functions in this class play certain moves,

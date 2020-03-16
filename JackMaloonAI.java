@@ -1,4 +1,4 @@
-package hw4;
+package connect4;
 
 import java.util.*;
 
@@ -13,37 +13,42 @@ public class JackMaloonAI implements CFPlayer{
 	*/
 	private class moveFinder{		
 		
-		CFGame g;																//instance of CFGame class. Used so logic behind game is updated
-		private int [][] getState;												//current board
-		private int AI_color = -1;												//color of AI (1 for red, -1 for black), will change depending on who goes first			
-		private int opp_color = 1;												//color of opponent (1 for red, -1 for black), will change depending on who goes first	
-		private ArrayList<Integer> losing_moves = new ArrayList<>();			//ArrayList of moves that will allow opponent to win on following turn
-		private ArrayList<Integer> unwise_moves = new ArrayList<>();			//ArrayList of moves that will allow opponent to block Ai's potential winning move on following turn
-		private ArrayList<Integer> sacrifice_moves = new ArrayList<>();			//ArrayList of moves that will allow sacrifice one potential four in a row for a better setup
-		private ArrayList<Integer> bad_setup = new ArrayList<>();				//ArrayList of moves that will allow opponent to block Ai's potential winning setup
-		private ArrayList<Integer> illegal_moves = new ArrayList<>();      		//ArrayList of moves that are illegal (column is full)
+		CFGame g;																	//instance of CFGame class. Used so logic behind game is updated
+		private int [][] getState;													//current board
+		private int AI_color = -1;													//color of AI (1 for red, -1 for black), will change depending on who goes first			
+		private int opp_color = 1;													//color of opponent (1 for red, -1 for black), will change depending on who goes first	
+		private ArrayList<Integer> losing_moves = new ArrayList<>();				//ArrayList of moves that will allow opponent to win on following turn
+		private ArrayList<Integer> unwise_moves = new ArrayList<>();				//ArrayList of moves that will allow opponent to block Ai's potential winning move on following turn
+		private ArrayList<Integer> sacrifice_moves = new ArrayList<>();				//ArrayList of moves that will allow sacrifice one potential four in a row for a better setup
+		private ArrayList<Integer> bad_setup = new ArrayList<>();					//ArrayList of moves that will allow opponent to block Ai's potential winning setup
+		private ArrayList<Integer> illegal_moves = new ArrayList<>();      			//ArrayList of moves that are illegal (column is full)
 		private ArrayList<Integer> best_AI_unblockable = new ArrayList<>();			//ArrayList of moves that will give AI three in a row that can't be immediately blocked
-		private ArrayList<Integer> best_opp_unblockable = new ArrayList<>();			//ArrayList of moves that will give opponent three in a row that can't be immediately blocked
+		private ArrayList<Integer> best_opp_unblockable = new ArrayList<>();		//ArrayList of moves that will give opponent three in a row that can't be immediately blocked
 		private ArrayList<Integer> ok_AI_unblockable = new ArrayList<>();			//ArrayList of moves that will give AI three in a row that can't be immediately blocked
 		private ArrayList<Integer> ok_opp_unblockable = new ArrayList<>();			//ArrayList of moves that will give opponent three in a row that can't be immediately blocked
-		private ArrayList<Integer> AI_blockable = new ArrayList<>();			//ArrayList of moves that will give AI three in a row that can be immediately blocked
-		private ArrayList<Integer> opp_blockable = new ArrayList<>();			//ArrayList of moves that will give opponent three in a row that can't be immediately blocked
-		private ArrayList<Integer> loss_avoider = new ArrayList<>();			//ArrayList of moves that block opponent from developing a winning game board
-		private ArrayList<Integer> loss_creator = new ArrayList<>();			//ArrayList of moves that allow opponent from developing a winning game board
-		private ArrayList<Integer> three_preventer = new ArrayList<>();			//ArrayList of moves allow opponent to make three in a row or stop AI from doing so
+		private ArrayList<Integer> AI_blockable = new ArrayList<>();				//ArrayList of moves that will give AI three in a row that can be immediately blocked
+		private ArrayList<Integer> opp_blockable = new ArrayList<>();				//ArrayList of moves that will give opponent three in a row that can't be immediately blocked
+		private ArrayList<Integer> loss_avoider = new ArrayList<>();				//ArrayList of moves that block opponent from developing a winning game board
+		private ArrayList<Integer> loss_creator = new ArrayList<>();				//ArrayList of moves that allow opponent from developing a winning game board
+		private ArrayList<Integer> three_preventer = new ArrayList<>();				//ArrayList of moves allow opponent to make three in a row or stop AI from doing so
 		private ArrayList<Integer> AI_winning_column= new ArrayList<>();			//ArrayList of moves in a column that allows for AI to win
 		private ArrayList<Integer> opp_winning_column= new ArrayList<>();			//ArrayList of moves in a column that allows for opp to win
-		private ArrayList<Integer> bad_position = new ArrayList<>();			//ArrayList of moves block opponent from three in a row unblockable in two directions
-		private ArrayList<Integer> winning_index = new ArrayList<>();			//ArrayList of columns thought to be winning columns
+		private ArrayList<Integer> bad_position = new ArrayList<>();				//ArrayList of moves block opponent from three in a row unblockable in two directions
+		private ArrayList<Integer> winning_index = new ArrayList<>();				//ArrayList of columns thought to be winning columns
 		private ArrayList<Integer> not_winning_column = new ArrayList<>();			//ArrayList of columns thought to be winning columns
-		private HashMap<Integer, Integer> AI_winnable_columns = new HashMap<>();   //HashMap of columns that are already considered winning
+		private HashMap<Integer, Integer> AI_winnable_columns = new HashMap<>();   	//HashMap of columns that are already considered winning
 		private HashMap<Integer, Integer> opp_winnable_columns = new HashMap<>();   //HashMap of columns that are already considered winning
-		private int[][] three_map;												//map of where three in a row is possible at some point in game		
-		private int[][] initial_four_map;										//initial map of where four in a row is possible at some point in game, 	
-		private int[][] four_map;												//map of where four in a row is possible at some point in game			
-		private boolean already_winning_column = false;							//true if a winning column already exists
-		private int num_touching;												//integer representing number of squares each legal move will touch that have already been played
+		private int[][] three_map;													//map of where three in a row is possible at some point in game		
+		private int[][] initial_four_map;											//initial map of where four in a row is possible at some point in game, 	
+		private int[][] four_map;													//map of where four in a row is possible at some point in game			
+		private boolean already_winning_column = false;								//true if a winning column already exists
+		private int num_touching;													//integer representing number of squares each legal move will touch that have already been played
 		
+		
+		/**
+	     * This constructor initializes numerous arrays that will be used to map the board and track criteria
+	     * @param g: instance of CFGame that holds logic for current game being played
+	    */
 		public moveFinder(CFGame g) {
 			
 			this.g = g;
@@ -64,8 +69,14 @@ public class JackMaloonAI implements CFPlayer{
 					  four_map[i][j] = 0;
 				  } 
 			}
-		}	
+		}
 		
+		/**
+	     * This method simulates a game move and tests different criteria based on simulate move
+	     * @param column: column of move to be simulated
+	     * @param opp_turn: boolean, true if simulating Ai's opponent's turn, false otherwise
+	     * @return boolean: true if move can be played, false otherwise
+	    */
 		public boolean pretendPlay(int column, boolean opp_turn) {				//simulates playing specific column. opp_turn true if opponents turn
 			
 			if(column<0 || column>=g.getNumCols() || g.fullColumn(column)) { 	//if move cannot be made
@@ -93,7 +104,7 @@ public class JackMaloonAI implements CFPlayer{
 				    if(row==0 || (row>0 && getState[column][row-1]!=0)) {   //checking conditions on simulated moves that can actually be played
 				    	
 				    	if(already_winning_column && opp_turn)      //checking to see if a column that is deemed winning will still be so after opponent goes
-				    		destroyWinningColumn(opp_turn, column);
+				    		destroyWinningColumn(column, opp_turn);
 				    	
 				    	if(!already_winning_column) 		//if no winning columns exists from previous turns, looking to find one
 				    		winningColumnCreator(column, row, opp_turn);
@@ -107,9 +118,9 @@ public class JackMaloonAI implements CFPlayer{
 			}  
 			  
 			if(!AI_winnable_columns.isEmpty())		//checking to see if AI's winning columns are truly winning
-    			testWinningColumn(true, column);
+    			testWinningColumn(column, true);
 			if(!opp_winnable_columns.isEmpty())		//checking to see if opponent's winning columns are truly winning
-    			testWinningColumn(false, column);	
+    			testWinningColumn(column, false);	
 			
 			avoidLoss();   			//sees is a row can be won horizontally in two moves
 			avoidAllowingThree();  //checks to see is a certain move would allow three out of four to be created
@@ -117,6 +128,11 @@ public class JackMaloonAI implements CFPlayer{
 			return true;
 		}
 		
+		/**
+	     * This method looks for moves that can win the game for either player
+	     * @param none
+	     * @return int: if int = -1, no direct winning moves found, otherwise, int returned is column to be played
+	    */
 		public int findWinningColumn() {
 			
 			four_map = fourMap();
@@ -206,6 +222,12 @@ public class JackMaloonAI implements CFPlayer{
 			return(-1);   //if no winning moves or opponent winning moves are found, -1 returned to indicate to try out other criteria
 		}
 		
+		/**
+	     * This method maps the game as a 2D array. Will store 1 or -1 in a given position is that spot would create a 4 
+	     * in a row for one player, wil hold 2 if both players can win in given spot, 0 otherwise.
+	     * @param none
+	     * @return temp_array: 2D array with same dimensions a game board with potential 4 in a row spots numbered with -1, 1, or 2
+	    */
 		public int[][] fourMap() {
 			
 			int[] move_types = {-1,1};
@@ -250,14 +272,269 @@ public class JackMaloonAI implements CFPlayer{
 			  }
 			  return temp_array;
 		}
+		
+		
+		/**
+	     * This method finds move that create three out of four in a given row, column, or diagonal
+	     * @param column: column of move to be simulated
+	     * @param column: row of simulated move
+	     * @param opp_turn: boolean, true if simulating Ai's opponent's turn, false otherwise
+	     * @param best_unblockable _arr: ArrayList of moves that will create a good 4 in a row chance
+	     * @param ok_unblockable _arr: ArrayList of moves that will create an okay 4 in a row chance
+	     * @param blockable _arr: ArrayList of moves that will create blockable 4 in a row opportunities
+	     * @return void
+	    */
+		public void threeInARow(int column, int row, boolean opp_turn, ArrayList<Integer> best_unblockable_arr, ArrayList<Integer> ok_unblockable_arr, ArrayList<Integer> blockable_arr) {
+			  
+			HashMap<Integer, Integer> three_unblockable = new HashMap<>();    	//HashMap thats hold columns that make three in a row that aren't blockable and rows of winning move
+			ArrayList<Integer> three_blockable = new ArrayList<>();    			//ArrayList thats hold columns that make three in a row that are blockable
+			
+			for(int i=0; i<g.getNumCols(); i++) {
+				for(int j=0;j<g.getNumRows(); j++) {
+					if(getState[i][j]!=0 && j<g.getNumRows()-3 && i==column && (j+2==row) && getState[i][j]==getState[i][j+1]    
+					   && getState[i][j]==getState[i][j+2] && getState[i][j+3]==0) {
+						//looks for three vertically
+						
+						three_blockable.add(column);
+						
+						if(three_map[column][row]==0)
+							three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+					}
+					
+					if(getState[i][j]!=0 && i<g.getNumCols()-2 && (i==column || i+1==column || i+2==column) && j==row && getState[i][j]==getState[i+1][j]   
+					   && getState[i][j]==getState[i+2][j] && (i<g.getNumCols()-3 && getState[i+3][j]==0 || i>0 && getState[i-1][j]==0)) {
+						//looks for three connected horizontally
+						
+						if(j>0 && i>0 && i<g.getNumCols()-3 && (getState[i-1][j-1]==0 || getState[i+3][j-1]==0)) {	
+							
+							if(getState[i-1][j-1]==0)
+								three_unblockable.put(column, j);
+							if(getState[i+3][j-1]==0) 		
+								three_unblockable.put(column, j);
+							
+							if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) 
+				    			three_unblockable.put(column, j);
+						}
+						else 
+							three_blockable.add(column);
+						
+						if(three_map[column][row]==0)
+							three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+				    }
+					
+					if(getState[i][j]!=0 && i<g.getNumCols()-3 && initial_four_map[i+1][j]!=getState[i][j] && initial_four_map[i+1][j]!=2 
+					   && (i==column || i+2==column || i+3==column) &&  j==row && getState[i][j]==getState[i+2][j]   
+					   && getState[i][j]==getState[i+3][j] && getState[i+1][j]==0) {		
+						//looks for three out of four horizontally with middle left empty
+						
+						if(j>0 && getState[i+1][j-1]==0) {
+							three_unblockable.put(column, j);
+							
+							if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) 
+								three_unblockable.put(column, j);
+						}
+						else 
+							three_blockable.add(column);	
 
-		public void avoidLoss() {	//sees whether a row be guaranteed 4 in a row in 2 turns
+						if(three_map[column][row]==0)
+							three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+					}
+					
+					if(getState[i][j]!=0 && i<g.getNumCols()-3 && initial_four_map[i+2][j]!=getState[i][j] && initial_four_map[i+2][j]!=2 
+					   && (i==column || i+1==column || i+3==column) && j==row && getState[i][j]==getState[i+1][j] 
+					   && getState[i][j]==getState[i+3][j] && getState[i+2][j]==0) {    
+						//looks for three out of four horizontally with middle right empty
+						
+						if(j>0 && getState[i+2][j-1]==0) { 
+							three_unblockable.put(column, j);
+							
+							if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1)
+								three_unblockable.put(column, j);
+						}
+						else 
+							three_blockable.add(column);
+						
+						if(three_map[column][row]==0)
+							three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+					}
+	
+				    if(getState[i][j]!=0 && i<g.getNumCols()-2 && j<g.getNumRows()-2 && (i==column && j==row || i+1==column && j+1==row || i+2==column && j+2==row)  
+				       && getState[i][j]==getState[i+1][j+1] && getState[i][j]==getState[i+2][j+2] && (j<g.getNumRows()-3 &&  i<g.getNumCols()-3 
+				       && getState[i+3][j+3]==0 || j>1 && i>1 && getState[i-1][j-1]==0)) {   
+				    	//looks for three in a row in upper right diagonal
+				    	
+				    	if((i<g.getNumCols()-3 && j<g.getNumRows()-3 && getState[i+3][j+2]==0) || (j==2 && i<g.getNumCols()-3 
+				    		&& ((i>0 && getState[i-1][j-2]==0) || getState[i+3][j+2]==0)) || (i==g.getNumCols()-3 && j>1 && getState[i-1][j-2]==0) 
+				    		|| (j==g.getNumRows()-3 && getState[i-1][j-2]==0)) {
+				    		
+				    		three_unblockable.put(column, j+1);
+				    		
+				    		if(getState[i][j]==1 && j%2==1 || getState[i][j]==-1 && j%2==0) {
+				    			three_unblockable.put(column, j+1);
+				    		}
+				    	}
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_map[column][row]==0)
+				    		three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j<g.getNumRows()-3 && initial_four_map[i+1][j+1]!=getState[i][j] && initial_four_map[i+1][j+1]!=2   
+				       && (i==column && j==row || i+2==column && j+2==row || i+3==column && j+3==row)&& getState[i][j]==getState[i+2][j+2] 
+				       && getState[i][j]==getState[i+3][j+3] && getState[i+1][j+1]==0) {   
+				    	//looks for 3/4 diagonally middle left empty
+				    	
+				    	if(getState[i+1][j]==0) {
+				    		three_unblockable.put(column, j+1);
+				    		
+				    		if(getState[i][j]==1 && j%2==1 || getState[i][j]==-1 && j%2==0) 
+				    			three_unblockable.put(column, j+1);
+				    	}
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_map[column][row]==0)
+				    		three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j<g.getNumRows()-3 && initial_four_map[i+2][j+2]!=getState[i][j] && initial_four_map[i+2][j+2]!=2   
+				       && (i==column && j==row || i+1==column && j+1==row || i+3==column && j+3==row) && getState[i][j]==getState[i+1][j+1] 
+				       && getState[i][j]==getState[i+3][j+3] && getState[i+2][j+2]==0) {
+				        //looks for 3/4 diagonally middle right empty
+				    	
+				    	if(getState[i+2][j+1]==0) {
+				    		three_unblockable.put(column, j);
+				    		
+				    		if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) 
+				    			three_unblockable.put(column, j);
+				    	}
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_map[column][row]==0)
+				    		three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-2 && j>=2 && (i==column && j==row || i+1==column && j-1==row || i+2==column && j-2==row) 
+				       && getState[i][j]==getState[i+1][j-1] && getState[i][j]==getState[i+2][j-2] && (i>1 && j<g.getNumRows()-1 
+				       && getState[i-1][j+1]==0 || i<g.getNumCols()-3 && j>2 && getState[i+3][j-3]==0)) {   
+				    	//looks for three in a row in lower right diagonal
+				    	
+				    	if(((j==3 || j==2) && i>0 && getState[i-1][j]==0) || (i>0 && i<g.getNumCols()-3 && j==4 && (getState[i-1][j]==0 || getState[i+3][j-4]==0)) 
+				    		|| (i==0 && j>3 && getState[i+3][j-4]==0) || (j==g.getNumCols()-1 && getState[i+3][j-4]==0)) {
+				    		
+				    		three_unblockable.put(column, j+1);
+				    		
+				    		if(getState[i][j]==1 && j%2==1 || getState[i][j]==-1 && j%2==0) 
+				    			three_unblockable.put(column, j+1);
+				    	}
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_map[column][row]==0)
+				    		three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j>2 && initial_four_map[i+1][j-1]!=getState[i][j] && initial_four_map[i+1][j-1]!=2   
+				       && (i==column && j==row || i+2==column && j-2==row || i+3==column && j-3==row) && getState[i][j]==getState[i+2][j-2] 
+				       && getState[i][j]==getState[i+3][j-3] && getState[i+1][j-1]==0) {  
+				    	//looks for 3/4 diagonally middle left empty
+				    	
+				    	if(getState[i+1][j-2]==0) {
+				    		three_unblockable.put(column, j-1);
+				    		
+				    		if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) 
+				    			three_unblockable.put(column, j-1);
+				    	}
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_map[column][row]==0)
+				    		three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+				    }
+				    
+				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j>2 && initial_four_map[i+2][j-2]!=getState[i][j] && initial_four_map[i+2][j-2]!=2   
+				       && (i==column && j==row || i+1==column && j-1==row || i+3==column && j-3==row) && getState[i][j]==getState[i+1][j-1] 
+				       && getState[i][j]==getState[i+3][j-3] && getState[i+2][j-2]==0) {  
+				    	//looks for 3/4 diagonally middle right empty
+				    	
+				    	if(getState[i+2][j-3]==0) {
+				    		three_unblockable.put(column, j);
+				    		
+				    		if(getState[i][j]==1 && j%2==1 || getState[i][j]==-1 && j%2==0) 
+				    			three_unblockable.put(column, j);
+				    	}
+				    	else 
+				    		three_blockable.add(column);
+				    	
+				    	if(three_map[column][row]==0)
+				    		three_map[column][row] = getState[i][j];
+						else if(three_map[column][row]!=getState[i][j])
+							three_map[column][row] = 2;
+				    }
+			    }  
+			}
+		
+			if((row>0 && getState[column][row-1]!=0)||row==0) {  //adding three blockable and unblockable to ArrayLists, in 'best' list if winning move is on a an opponent's row.
+																//the player who goes first's row is the even number rows (0,2,4), and the second player's are the odd ones (1,3,5)
+				
+				blockable_arr.addAll(three_blockable);
+				
+				for(int num: three_unblockable.keySet()) {
+		    		
+					int r = three_unblockable.get(num);
+					if(opp_turn && (opp_color==1 && r%2==0 || opp_color==-1 && r%2==1) || !opp_turn && (AI_color==1 && r%2==0 || AI_color==-1 && r%2==1)) 
+						best_unblockable_arr.add(num);
+					else 
+						ok_unblockable_arr.add(num);
+				}
+		    }
+			else if(getState[column][row-1]==0 && (row==1 || (row>1 && getState[column][row-2]!=0))) {  //if move would create bad setup, indicate this
+				
+				for(int num: three_unblockable.keySet()) {
+		    		if(!best_AI_unblockable.contains(num) && !best_opp_unblockable.contains(num) && !bad_position.contains(num)) {
+						int r = three_unblockable.get(num);
+						if(opp_turn && (opp_color==1 && r%2==0 || opp_color==-1 && r%2==1)) {
+							bad_position.add(num);
+						}
+		    		}
+				}
+			}
+		}
+		
+		/**
+	     * This method looks if a 4 in a row can be made in 2 turns and updates values of different ArrayLists.
+	     * Comments under 'if' statements indicate which win type (in a row, upper diagonal, lower diagonal) is being looked at.
+	     * Upper diagonal refers to diagonal that moves up as you move from left to right.
+	     * @param none
+	     * @return void
+	    */
+		public void avoidLoss() {
 			
 			for(int i=0; i<g.getNumCols()-4; i++) {
 				for(int j=0;j<g.getNumRows(); j++) {
 					
-					if(getState[i+2][j]!=0 && (getState[i][j]==0 && getState[i+1][j]==0 && getState[i+2][j]==getState[i+3][j] && getState[i+4][j]==0)) {  //checking to see if row can be won/lost or can be set up to win/lose
-						
+					if(getState[i+2][j]!=0 && (getState[i][j]==0 && getState[i+1][j]==0 && getState[i+2][j]==getState[i+3][j] && getState[i+4][j]==0)) {
+						// in a row
 						if(j==0 || (j>0 && (getState[i][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+4][j-1]!=0))) {
 							System.out.println('a');
 							if(!loss_avoider.contains(i+1))
@@ -287,8 +564,8 @@ public class JackMaloonAI implements CFPlayer{
 						}
 					}
 					
-					if(getState[i+2][j]!=0 && (getState[i][j]==0 && getState[i+1][j]==getState[i+2][j] && getState[i+3][j]==0 && getState[i+4][j]==0)) {  //checking to see if row can be won/lost or can be set up to win/lose		
-					
+					if(getState[i+2][j]!=0 && (getState[i][j]==0 && getState[i+1][j]==getState[i+2][j] && getState[i+3][j]==0 && getState[i+4][j]==0)) {  
+						// in a row
 						if(j==0|| (j>0 && (getState[i][j-1]!=0 && getState[i+3][j-1]!=0 && getState[i+4][j-1]!=0))) {
 							System.out.println('e');	
 							if(!loss_avoider.contains(i+3))
@@ -317,8 +594,8 @@ public class JackMaloonAI implements CFPlayer{
 						}
 					}
 					
-					if(i>0 && i<g.getNumCols()-3 && getState[i][j]!=0 && getState[i+1][j]==0 && getState[i-1][j]==0 && getState[i+3][j]==0 && getState[i][j]==getState[i+2][j]) { //checking to see if row can be won/lost or can be set up to win/lose	
-						
+					if(i>0 && i<g.getNumCols()-3 && getState[i][j]!=0 && getState[i+1][j]==0 && getState[i-1][j]==0 && getState[i+3][j]==0 && getState[i][j]==getState[i+2][j]) { 
+						// in a row
 						if(j==0|| (j>0 && (getState[i-1][j-1]!=0 && getState[i+1][j-1]!=0 && getState[i+3][j-1]!=0))) {
 							System.out.println('i');
 							if(!loss_avoider.contains(i+1))
@@ -347,8 +624,8 @@ public class JackMaloonAI implements CFPlayer{
 						}
 					}
 					
-					if((i==0 || i==1) && getState[i][j]!=0 && getState[i+1][j]==0 && (getState[i+2][j]==getState[i][j] && getState[i+3][j]==0 || (getState[i+3][j]==getState[i][j] && getState[i+2][j]==0))  //checking to see if row can be won/lost or can be set up to win/lose	
-						&& getState[i+4][j]==0 && getState[i+5][j]==getState[i][j]) {
+					if((i==0 || i==1) && getState[i][j]!=0 && getState[i+1][j]==0 && (getState[i+2][j]==getState[i][j] && getState[i+3][j]==0 || (getState[i+3][j]==getState[i][j] && getState[i+2][j]==0))  
+						&& getState[i+4][j]==0 && getState[i+5][j]==getState[i][j]) {   // in a row
 						
 						if(j==0 || (getState[i+1][j-1]!=0 && (getState[i+2][j]==0 && getState[i+2][j-1]!=0 || getState[i+3][j]==0 && getState[i+3][j-1]!=0) && getState[i+4][j-1]!=0)){
 							System.out.println('m');
@@ -577,6 +854,13 @@ public class JackMaloonAI implements CFPlayer{
 			}  
 		}
 		
+		/**
+	     * This method looks to see if a move will create a column with 2 winning moves stacked on top of one another
+	     * @param column: column of move to be simulated
+	     * @param row: row of simulated move
+	     * @param opp_turn: boolean, true if simulating Ai's opponent's turn, false otherwise
+	     * @return void
+	    */
 		public void winningColumnCreator(int column, int row, boolean opp_turn) {
 			
 			HashMap<Integer, Integer> opp_winning_moves = new HashMap<>();
@@ -602,11 +886,8 @@ public class JackMaloonAI implements CFPlayer{
 								if(four_map[i][num]==opp_color || four_map[i][num]==2)
 									opp_can_win = true;			
 							}
-							if(!AI_winning_column.contains(column) && !opp_can_win) {
-								System.out.println("found AI winning column " + column );
-								
+							if(!AI_winning_column.contains(column) && !opp_can_win) 
 								AI_winnable_columns.put(column, empty_squares);
-							}
 						}
 						else if(j<g.getNumRows()-1 && four_map[i][j]==opp_color && (four_map[i][j]==four_map[i][j+1] || four_map[i][j+1]==2)) {
 							
@@ -614,11 +895,8 @@ public class JackMaloonAI implements CFPlayer{
 								if(four_map[i][j]==opp_color || four_map[i][num]==2)
 									opp_can_win = true;			
 							}
-							if(!opp_winning_column.contains(column) && !opp_can_win) {
-								System.out.println("found opp winning column " + column );
-								
-								opp_winnable_columns.put(column, empty_squares);
-							}
+							if(!opp_winning_column.contains(column) && !opp_can_win) 
+								opp_winnable_columns.put(column, empty_squares);	
 						}
 						if(four_map[i][j]==AI_color && (j==0 || getState[i][j-1]!=0)) {
 							
@@ -654,6 +932,12 @@ public class JackMaloonAI implements CFPlayer{
 			}
 		}
 		
+		/**
+	     * This method looks to see if a move will allow opponent to set up a winning move for themselves
+	     * @param column: column of move to be simulated
+	     * @param row: row of simulated move
+	     * @return void
+	    */
 		public void losingBoardCreator(int column, int row){
 			
 			HashMap<Integer, Integer> opp_winning_creator = new HashMap<>();
@@ -690,17 +974,14 @@ public class JackMaloonAI implements CFPlayer{
 									if(!AI_can_win) {
 										if(!AI_winnable_columns.isEmpty()) {
 											for(int index: winning_index) {
-												if(empty_squares<AI_winnable_columns.get(index)) {
+												if(empty_squares<AI_winnable_columns.get(index)) 
 													loss_creator.add(column);
-												}
-												
 											}
 										}
 										else {
 											loss_creator.add(column);
 										}
 									}
-									
 								}
 								
 								if(four_map[i][j]==opp_color && (j==0 || getState[i][j-1]!=0)) {
@@ -715,15 +996,11 @@ public class JackMaloonAI implements CFPlayer{
 							}
 						}
 						getState[c][r] = 0;
-					
 
 						for(int col_num=0; col_num<g.getNumCols(); col_num++){
 							if(!opp_winning_creator.isEmpty() && opp_winning_creator.containsKey(col_num) && opp_winning_creator.get(col_num)>1) { 
-								
-								if(!loss_creator.contains(col_num)) {
+								if(!loss_creator.contains(col_num)) 
 									loss_creator.add(col_num);
-									System.out.println("loss creator " + col_num);
-								}
 							}
 						}
 					}
@@ -731,7 +1008,13 @@ public class JackMaloonAI implements CFPlayer{
 			}
 		}
 		
-		public void destroyWinningColumn(boolean opp_turn, int column) {
+		/**
+	     * This method looks to see if a move will make a column with two winning moves on top of one another not be a winning column
+	     * @param column: column of move to be simulated
+	     * @param opp_turn: boolean, true if simulating Ai's opponent's turn, false otherwise
+	     * @return void
+	    */
+		public void destroyWinningColumn(int column, boolean opp_turn) {
 			
 			four_map = fourMap();
 			boolean opp_can_win = false;
@@ -740,7 +1023,6 @@ public class JackMaloonAI implements CFPlayer{
 			ArrayList<Integer> winning_column;
 			int good_color;
 			int bad_color;
-			int row_of_move = -1;
 			
 			if(opp_turn) {
 				winnable_columns = AI_winnable_columns;
@@ -756,7 +1038,6 @@ public class JackMaloonAI implements CFPlayer{
 			}
 			
 			temp_winning_map = new HashMap(winnable_columns);
-			System.out.println("twm " + temp_winning_map);
 			
 			for(int i: temp_winning_map.keySet()) {    //looks at places on board where four in a row can be made and if two of same color on top of each other, indicates winning column
 
@@ -770,31 +1051,20 @@ public class JackMaloonAI implements CFPlayer{
 						for(int num=0; num<j+1; num++) {
 							if(four_map[i][num]==bad_color || four_map[i][num]==2) {
 								opp_can_win = true;
-								System.out.println("dead " + i);
 								break;
 							}
 						}
 							
-						if(!opp_can_win) {
-							System.out.println("Still good " + i);
+						if(!opp_can_win) 
 							still_good_column = i;
-						}
 					}
-
 				}
 				
-				
 				if(still_good_column!=i) {
-					System.out.println("was winnable " + winnable_columns);
-					System.out.println("i " + i);
-					
-					System.out.println("column " + column);
 					winnable_columns.remove(i);
 					not_winning_column.add(i);
-					System.out.println("now winnable " + winnable_columns);
 				}	
 			}
-			
 		
 			if(winnable_columns.isEmpty()) {
 				already_winning_column = false;
@@ -810,23 +1080,25 @@ public class JackMaloonAI implements CFPlayer{
 						
 						int num = temp_map.get(key);
 						num--;
-						if(num<0) {
+						if(num<0) 
 							winnable_columns.remove(key);
-						}
-						else {
+						else 
 							temp_map.put(key, num);
-						}
 					}
 				}
 
-				if(!winning_column.contains((int)temp_map.keySet().toArray()[0])) {
+				if(!winning_column.contains((int)temp_map.keySet().toArray()[0])) 
 					winning_column.add((int)temp_map.keySet().toArray()[0]);
-					System.out.println(winning_column);
-				}
 			}
 		}
 		
-		public void testWinningColumn(boolean opp_turn, int column) {
+		/**
+	     * This method checks the columns that are considered winning columns and tests whether they are actually winning
+	     * @param column: column of move to be simulated
+	     * @param opp_turn: boolean, true if simulating Ai's opponent's turn, false otherwise
+	     * @return void
+	    */
+		public void testWinningColumn(int column, boolean opp_turn) {
 
 			boolean opp_can_win = false;
 			HashMap<Integer, Integer> winnable_columns;
@@ -850,14 +1122,11 @@ public class JackMaloonAI implements CFPlayer{
 				bad_color = AI_color;
 			}
 			
-			temp_map = new HashMap(winnable_columns);
-			System.out.println("temp mpa " +temp_map);
-			
+			temp_map = new HashMap(winnable_columns);			
 			
 			for(int col: temp_map.keySet()) {    //looks at places on board where four in a row can be made and if two of same color on top of each other, indicates winning column
-				
 
-				for(int r=0; r<g.getNumRows(); r++) {
+				for(int r=0; r<g.getNumRows(); r++) {  //finds row that potential winning move would be played on
 					if(getState[col][r]==0) {
 						getState[col][r] = good_color;
 						row_of_move = r;
@@ -868,293 +1137,50 @@ public class JackMaloonAI implements CFPlayer{
 				int still_good_column = -1;
 				opp_can_win = false;
 				
-
-				for(int ii=0;ii<g.getNumRows(); ii++) {
+				for(int i=0;i<g.getNumCols(); i++) {  //looking at all possible moves with current game board and seeing if the would make winning move not winning anymore
 					for(int j=0;j<g.getNumRows(); j++) {
 						
-						if(getState[ii][j]==0) {
+						if(getState[i][j]==0) { // simulating move to see whether move offsets predetermined winning move
 							
-							getState[ii][j] = bad_color;
+							getState[i][j] = bad_color;
 							four_map = fourMap();
 
-							if(j<g.getNumRows()-1 && (four_map[ii][j]==good_color || four_map[ii][j]==2) && (four_map[ii][j+1]== good_color || four_map[ii][j+1]==2)) {
+							if(j<g.getNumRows()-1 && (four_map[i][j]==good_color || four_map[i][j]==2) && (four_map[i][j+1]== good_color || four_map[i][j+1]==2)) {
 								
 								for(int num=0; num<j+1; num++) {
-									if(four_map[ii][num]==bad_color || four_map[ii][num]==2) {
+									if(four_map[i][num]==bad_color || four_map[i][num]==2) {
 										opp_can_win = true;
-										System.out.println("dead " + ii);
 										break;
 									}
 								}
 									
-								if(!opp_can_win) {
-									System.out.println("opp cant win " + ii);
+								if(!opp_can_win) 
 									still_good_column = col;
-								}
 							}
-							getState[ii][j] = 0;
+							getState[i][j] = 0;
 						}
-						
-						break;
 					}
 				}
 				
-				if(still_good_column!=col) {
-					System.out.println("winn " + winnable_columns);
-					System.out.println("ii " + col);
-					
-					System.out.println("column " + column);
+				if(still_good_column!=col)  //removing thought to be winning move if its not actually winning
 					winnable_columns.remove(col);
-				}
-				getState[col][row_of_move] = 0;
-
+				
+				
+				getState[col][row_of_move] = 0;  //resetting original simulated move
 			}
-			
 
-			for(int index: winnable_columns.keySet()) {
+			for(int index: winnable_columns.keySet()) {  //adding actual winning columns to ArrayList
 				if(!winning_column.contains(index))
 					winning_column.add(index);
 			}
 			
 		}
-			
-		public void threeInARow(int column, int row, boolean opp_turn, ArrayList<Integer> best_unblockable_arr, ArrayList<Integer> ok_unblockable_arr, ArrayList<Integer> blockable_arr) {
-			  
-			HashMap<Integer, Integer> three_unblockable = new HashMap<>();    //HashMap thats hold columns that make three in a row that aren't blockable and rows of winning move
-			ArrayList<Integer> three_blockable = new ArrayList<>();    ////arraylist thats hold columns that make three in a row that are blockable
-			
-			for(int i=0; i<g.getNumCols(); i++) {
-				for(int j=0;j<g.getNumRows(); j++) {
-					if(getState[i][j]!=0 && j<g.getNumRows()-3 && i==column && (j+2==row) && getState[i][j]==getState[i][j+1]    //looks for three vertically
-					   && getState[i][j]==getState[i][j+2] && getState[i][j+3]==0) {
-						
-						three_blockable.add(column);
-						
-						if(three_map[column][row]==0)
-							three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-					}
-					
-					if(getState[i][j]!=0 && i<g.getNumCols()-2 && (i==column || i+1==column || i+2==column) && j==row && getState[i][j]==getState[i+1][j]   //looks for three connected horizontally
-					   && getState[i][j]==getState[i+2][j] && (i<g.getNumCols()-3 && getState[i+3][j]==0 || i>0 && getState[i-1][j]==0)) {
-						
-						if(j>0 && i>0 && i<g.getNumCols()-3 && (getState[i-1][j-1]==0 || getState[i+3][j-1]==0)) {	
-							
-							if(getState[i-1][j-1]==0)
-								three_unblockable.put(column, j);
-							if(getState[i+3][j-1]==0) 		
-								three_unblockable.put(column, j);
-							
-							if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) {
-				    			three_unblockable.put(column, j);
-				    		}
-						}
-						else 
-							three_blockable.add(column);
-						
-						if(three_map[column][row]==0)
-							three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-				    }
-					
-					if(getState[i][j]!=0 && i<g.getNumCols()-3 && initial_four_map[i+1][j]!=getState[i][j] && initial_four_map[i+1][j]!=2 
-					   && (i==column || i+2==column || i+3==column) &&  j==row && getState[i][j]==getState[i+2][j]   //looks for three out of four horizontally with middle left empty
-					   && getState[i][j]==getState[i+3][j] && getState[i+1][j]==0) {		
-						
-						if(j>0 && getState[i+1][j-1]==0) {
-							three_unblockable.put(column, j);
-							
-							if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) {
-								three_unblockable.put(column, j);
-				    		}
-						}
-						else 
-							three_blockable.add(column);	
 
-						if(three_map[column][row]==0)
-							three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-					}
-					
-					if(getState[i][j]!=0 && i<g.getNumCols()-3 && initial_four_map[i+2][j]!=getState[i][j] && initial_four_map[i+2][j]!=2 
-					   && (i==column || i+1==column || i+3==column) && j==row && getState[i][j]==getState[i+1][j] 
-					   && getState[i][j]==getState[i+3][j] && getState[i+2][j]==0) {    //looks for three out of four horizontally with middle right empty
-						
-						if(j>0 && getState[i+2][j-1]==0) { 
-							three_unblockable.put(column, j);
-							
-							if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) {
-								three_unblockable.put(column, j);
-				    		}
-						}
-						else 
-							three_blockable.add(column);
-						
-						if(three_map[column][row]==0)
-							three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-					}
-	
-				    if(getState[i][j]!=0 && i<g.getNumCols()-2 && j<g.getNumRows()-2 && (i==column && j==row || i+1==column && j+1==row || i+2==column && j+2==row)  //looks for three in a row in upper right diagonal
-				       && getState[i][j]==getState[i+1][j+1] && getState[i][j]==getState[i+2][j+2] && (j<g.getNumRows()-3 &&  i<g.getNumCols()-3 
-				       && getState[i+3][j+3]==0 || j>1 && i>1 && getState[i-1][j-1]==0)) {   
-				    	
-				    	if((i<g.getNumCols()-3 && j<g.getNumRows()-3 && getState[i+3][j+2]==0) || (j==2 && i<g.getNumCols()-3 
-				    		&& ((i>0 && getState[i-1][j-2]==0) || getState[i+3][j+2]==0)) || (i==g.getNumCols()-3 && j>1 && getState[i-1][j-2]==0) 
-				    		|| (j==g.getNumRows()-3 && getState[i-1][j-2]==0)) {
-				    		
-				    		three_unblockable.put(column, j+1);
-				    		
-				    		if(getState[i][j]==1 && j%2==1 || getState[i][j]==-1 && j%2==0) {
-				    			three_unblockable.put(column, j+1);
-				    		}
-				    	}
-				    	else 
-				    		three_blockable.add(column);
-				    	
-				    	if(three_map[column][row]==0)
-				    		three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-				    }
-				    
-				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j<g.getNumRows()-3 && initial_four_map[i+1][j+1]!=getState[i][j] && initial_four_map[i+1][j+1]!=2   //looks for 3/4 diagonally middle left empty
-				       && (i==column && j==row || i+2==column && j+2==row || i+3==column && j+3==row)&& getState[i][j]==getState[i+2][j+2] 
-				       && getState[i][j]==getState[i+3][j+3] && getState[i+1][j+1]==0) {   
-				    	
-				    	if(getState[i+1][j]==0) {
-				    		three_unblockable.put(column, j+1);
-				    		
-				    		if(getState[i][j]==1 && j%2==1 || getState[i][j]==-1 && j%2==0) {
-				    			three_unblockable.put(column, j+1);
-				    		}
-				    	}
-				    	else 
-				    		three_blockable.add(column);
-				    	
-				    	if(three_map[column][row]==0)
-				    		three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-				    }
-				    
-				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j<g.getNumRows()-3 && initial_four_map[i+2][j+2]!=getState[i][j] && initial_four_map[i+2][j+2]!=2   //looks for 3/4 diagonally middle right empty
-				       && (i==column && j==row || i+1==column && j+1==row || i+3==column && j+3==row) && getState[i][j]==getState[i+1][j+1] && getState[i][j]==getState[i+3][j+3] && getState[i+2][j+2]==0) {
-				    	
-				    	if(getState[i+2][j+1]==0) {
-				    		three_unblockable.put(column, j);
-				    		
-				    		if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) {
-				    			three_unblockable.put(column, j);
-				    		}
-				    	}
-				    	else 
-				    		three_blockable.add(column);
-				    	
-				    	if(three_map[column][row]==0)
-				    		three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-				    }
-				    
-				    if(getState[i][j]!=0 && i<g.getNumCols()-2 && j>=2 && (i==column && j==row || i+1==column && j-1==row || i+2==column && j-2==row) 
-				       && getState[i][j]==getState[i+1][j-1] && getState[i][j]==getState[i+2][j-2] && (i>1 && j<g.getNumRows()-1 
-				       && getState[i-1][j+1]==0 || i<g.getNumCols()-3 && j>2 && getState[i+3][j-3]==0)) {   //looks for three in a row in lower right diagonal
-				    	
-				    	if(((j==3 || j==2) && i>0 && getState[i-1][j]==0) || (i>0 && i<g.getNumCols()-3 && j==4 && (getState[i-1][j]==0 || getState[i+3][j-4]==0)) 
-				    		|| (i==0 && j>3 && getState[i+3][j-4]==0) || (j==g.getNumCols()-1 && getState[i+3][j-4]==0)) {
-				    		
-				    		three_unblockable.put(column, j+1);
-				    		
-				    		if(getState[i][j]==1 && j%2==1 || getState[i][j]==-1 && j%2==0) {
-				    			three_unblockable.put(column, j+1);
-				    		}
-				    	}
-				    	else 
-				    		three_blockable.add(column);
-				    	
-				    	if(three_map[column][row]==0)
-				    		three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-				    }
-				    
-				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j>2 && initial_four_map[i+1][j-1]!=getState[i][j] && initial_four_map[i+1][j-1]!=2   //looks for 3/4 diagonally middle left empty
-				       && (i==column && j==row || i+2==column && j-2==row || i+3==column && j-3==row) && getState[i][j]==getState[i+2][j-2] && getState[i][j]==getState[i+3][j-3] && getState[i+1][j-1]==0) {  
-				    	
-				    	if(getState[i+1][j-2]==0) {
-				    		three_unblockable.put(column, j-1);
-				    		
-				    		if(getState[i][j]==1 && j%2==0 || getState[i][j]==-1 && j%2==1) {
-				    			three_unblockable.put(column, j-1);
-				    		}
-				    	}
-				    	else 
-				    		three_blockable.add(column);
-				    	
-				    	if(three_map[column][row]==0)
-				    		three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-				    }
-				    
-				    if(getState[i][j]!=0 && i<g.getNumCols()-3 && j>2 && initial_four_map[i+2][j-2]!=getState[i][j] && initial_four_map[i+2][j-2]!=2   //looks for 3/4 diagonally middle right empty
-				       && (i==column && j==row || i+1==column && j-1==row || i+3==column && j-3==row) && getState[i][j]==getState[i+1][j-1] && getState[i][j]==getState[i+3][j-3] && getState[i+2][j-2]==0) {  
-				    	
-				    	if(getState[i+2][j-3]==0) {
-				    		three_unblockable.put(column, j);
-				    		
-				    		if(getState[i][j]==1 && j%2==1 || getState[i][j]==-1 && j%2==0) {
-				    			three_unblockable.put(column, j);
-				    		}
-				    	}
-				    	else 
-				    		three_blockable.add(column);
-				    	
-				    	if(three_map[column][row]==0)
-				    		three_map[column][row] = getState[i][j];
-						else if(three_map[column][row]!=getState[i][j])
-							three_map[column][row] = 2;
-				    }
-			    }  
-			}
-
-		
-			if((row>0 && getState[column][row-1]!=0)||row==0) {
-				
-				blockable_arr.addAll(three_blockable);
-				
-				for(int num: three_unblockable.keySet()) {
-		    		
-					int r = three_unblockable.get(num);
-					if(opp_turn && (opp_color==1 && r%2==0 || opp_color==-1 && r%2==1) || !opp_turn && (AI_color==1 && r%2==0 || AI_color==-1 && r%2==1)) {
-					
-						best_unblockable_arr.add(num);
-					}
-					else {
-						ok_unblockable_arr.add(num);
-					}
-		    		
-				}
-
-		    }
-			else if(row>0 && getState[column][row-1]==0 && (row==1 || getState[column][row-2]!=0)) {
-				
-				for(int num: three_unblockable.keySet()) {
-		    		if(!best_AI_unblockable.contains(num) && !best_opp_unblockable.contains(num) && !bad_position.contains(num)) {
-						int r = three_unblockable.get(num);
-						if(opp_turn && (opp_color==1 && r%2==0 || opp_color==-1 && r%2==1)) {
-							bad_position.add(num);
-						}
-		    		}
-				}
-			}
-		}
-		
+		/**
+	     * This method checks for moves that allow opponent to make three in a row
+	     * @param none
+	     * @return void 
+	    */
 		public void avoidAllowingThree() {
 			
 			for(int i=0; i<g.getNumCols(); i++) {
@@ -1181,14 +1207,144 @@ public class JackMaloonAI implements CFPlayer{
 		}
 	}
 	
-	boolean ya;
 	
-	public JackMaloonAI(boolean ya) {
-		this.ya = ya;
+	
+	boolean sim_mode;  // if true, moves will be simulated by ai in order to see if initial move will cause winning/losing game under its own logic
+	
+	/**
+     * This constructor initializes of sim_mode to whatever value is passed in
+     * @param sim_mode: boolean, if true, moves will be simulated by ai in order to see if initial move will cause winning/losing game under its own logic
+    */
+	public JackMaloonAI(boolean sim_mode) {
+		this.sim_mode = sim_mode;
 	}
 	
-	public int columnQuality(CFGame g, moveFinder m, boolean print, ArrayList<Integer> good_sim_columns, ArrayList<Integer> bad_sim_columns) {			//plays the next move with sound logic
+	/**
+     * This method simulates several moves in advance (if sim_mode true) and will return a column to be played based on logic in  moveFinder
+     * @param column: column of move to be simulated
+     * @return int: column to be played
+    */
+	public int nextMove(CFGame g) {
+		moveFinder m = new moveFinder(g);						//instance of moveFinder class	
+		ArrayList<Integer> moves_played = new ArrayList<>();	//columns of moves simulated
+		ArrayList<Integer> good_columns = new ArrayList<>();	//will hold columns of moves that causes ai (going first) to win against itself
+		ArrayList<Integer> bad_columns = new ArrayList<>();		//will hold columns of moves that causes ai (going first) to lose against itself
+		int ai_num = -1;
+		int opp_first_move = -1;
+		HashMap<Integer, Integer> good_first_moves = new HashMap<>();
+		int index;
+		
+		int win_finder = m.findWinningColumn();
 
+		if(win_finder!=-1) {
+			return(win_finder);
+		}
+		else {
+			for(int col=0; col<g.getNumCols(); col++) { 
+				if(sim_mode && !g.fullColumn(col)) {  //simulating game moves
+					g.play(col);
+					if(!g.isRedTurn())
+						ai_num = 1;
+				
+					if(!g.isGameOver()) {
+						for(int sim_move=0; sim_move<10; sim_move++) {
+							index = columnQuality(g, new moveFinder(g), false, new ArrayList<Integer>(), new ArrayList<Integer>());
+							g.play(index);
+							moves_played.add(index);
+							
+							if(sim_move==0)
+								opp_first_move = index;
+							
+							if(g.isGameOver()) {
+								if(g.isWinner()) {
+
+									if(g.isRedTurn() && ai_num==-1 || !g.isRedTurn() && ai_num==1) {
+										good_columns.add(col);
+										good_first_moves.put(col, opp_first_move);
+									}
+									if(g.isRedTurn() && ai_num==1 || !g.isRedTurn() && ai_num==-1) 
+										bad_columns.add(col);
+								}
+								break;
+							}
+						}
+					}
+					
+					for(int num:moves_played) {
+						g.unplay(num);
+					}
+					
+					moves_played.clear();
+					g.unplay(col);
+				}	
+			}
+
+			ArrayList<Integer> temp_good = new ArrayList<Integer>(good_columns);
+			ArrayList<Integer> test_bad_columns = new ArrayList<>();
+			
+			if(!temp_good.isEmpty()) {
+				for(int col_index: temp_good) {
+					
+					if(sim_mode && !g.fullColumn(col_index)) {
+						g.play(col_index);
+												
+						for(int col=0; col<g.getNumCols(); col++) {
+							if(!g.fullColumn(col)) {
+								
+								g.play(col);
+
+								if(g.isRedTurn())
+									ai_num = -1;
+								else
+									ai_num = 1;
+							
+								if(!g.isGameOver()) {
+									for(int sim_move=0; sim_move<10; sim_move++) {
+										index = columnQuality(g, new moveFinder(g), false, new ArrayList<Integer>(), new ArrayList<Integer>());
+										g.play(index);
+										moves_played.add(index);
+										
+										if(g.isGameOver()) {
+											if(g.isWinner()) {
+												if(g.isRedTurn() && ai_num==1 || !g.isRedTurn() && ai_num==-1) 
+													test_bad_columns.add(col);
+											}
+											
+											break;
+										}
+									}
+								}
+								
+								for(int num:moves_played) {
+									g.unplay(num);
+								}
+								
+								moves_played.clear();
+								g.unplay(col);
+							}
+						}
+						g.unplay(col_index);
+					}
+ 
+					if(test_bad_columns.contains(good_first_moves.get(col_index))) 
+						good_columns.remove((Object) col_index);
+				}
+			}
+
+			return(columnQuality(g, new moveFinder(g), true, good_columns, bad_columns));
+		}
+	}
+	
+	/**
+     * This method creates instance of moveFinder inner class to gather logic based on differnt potential moves
+     * @param g: instance of CFGame class that holds logic behind game
+     * @param m: instance of moveFinder inner class that holds logic behind each potential move
+     * @param print: boolean that will print values of ArrayLists from moveFinder if true
+     * @param good_sim_columns: ArrayList of moves in which AI beat itself when going first
+     * @param bad_sim_columns: ArrayList of moves in which AI lost to itself when going first
+     * @return int: column to be played
+    */
+	public int columnQuality(CFGame g, moveFinder m, boolean print, ArrayList<Integer> good_sim_columns, ArrayList<Integer> bad_sim_columns) {
 		int index = m.findWinningColumn();   //function that finds winning moves, moves to avoid losing, and also columns that are winnable
 
 		int[] quality_array = {0,1,3,7,3,1,0}; 		//Assigning starting values to quality array that skew towards the center. This array will  determine which col to play
@@ -1205,35 +1361,9 @@ public class JackMaloonAI implements CFPlayer{
 				m.pretendPlay(col, true);
 
 				quality_array[col] += m.num_touching;
-				
-			}
-			if(false) {
-				for(int num: m.loss_creator)
-				if(!bad_sim_columns.contains(num)){
-					System.out.println("good sim columns " + good_sim_columns);
-					System.out.println("bad sim columns " + bad_sim_columns);
-					System.out.println("losing moves " + m.losing_moves);
-					System.out.println("unwise moves " + m.unwise_moves);
-					System.out.println("sacrifice moves " + m.sacrifice_moves);
-					System.out.println("illegal moves " + m.illegal_moves);
-					System.out.println("three_preventable " + m.three_preventer);
-					System.out.println("bad position " + m.bad_position);
-					System.out.println("best ai  unblockable " + m.best_AI_unblockable);
-					System.out.println("best opp unblockable " + m.best_opp_unblockable);
-					System.out.println("ok ai  unblockable " + m.ok_AI_unblockable);
-					System.out.println("ok opp unblockable " + m.ok_opp_unblockable);
-					System.out.println("ai blockable " + m.AI_blockable);
-					System.out.println("opp blockable " + m.opp_blockable);
-					System.out.println("AI winning column " +m.AI_winning_column);
-					System.out.println("opp winning column " +m.opp_winning_column);
-					System.out.println("loss avoider " + m.loss_avoider);
-					System.out.println("loss creator " + m.loss_creator);
-					g.printGameMoves();
-					//throw new ArithmeticException();
-				}
 			}
 
-			if(print) {
+			if(print) {  //printing values in various ArrayLists
 				System.out.println("good sim columns " + good_sim_columns);
 				System.out.println("bad sim columns " + bad_sim_columns);
 				System.out.println("losing moves " + m.losing_moves);
@@ -1255,168 +1385,24 @@ public class JackMaloonAI implements CFPlayer{
 			
 			}
 		
-		
-			
 			return max_element_array(quality_array, good_sim_columns, bad_sim_columns, m.illegal_moves, m.losing_moves, m.unwise_moves, m.sacrifice_moves, 
 					m.bad_setup, m.loss_avoider, m.loss_creator, m.best_AI_unblockable, m.best_opp_unblockable, m.ok_AI_unblockable, m.ok_opp_unblockable, 
 					m.AI_blockable, m.opp_blockable, m.AI_winning_column, m.opp_winning_column, m.three_preventer, m.bad_position, m.four_map);
 		}
 	}
 	
-	public int nextMove(CFGame g) {
-		moveFinder m = new moveFinder(g);
-		ArrayList<Integer> moves_played = new ArrayList<>();
-		ArrayList<Integer> good_columns = new ArrayList<>();
-		ArrayList<Integer> bad_columns = new ArrayList<>();
-		int ai_num = -1;
-		int opp_first_move = -1;
-		HashMap<Integer, Integer> good_first_moves = new HashMap<>();;
-		int index;
-		
-		int win_finder = m.findWinningColumn();
-
-		if(win_finder!=-1) {
-			return(win_finder);
-		}
-		else {
-			for(int col=0; col<g.getNumCols(); col++) { 
-				//if(!g.fullColumn(col)) {
-				if(ya && !g.fullColumn(col)) {
-					g.play(col);
-					System.out.println("");
-					System.out.println("played " + col);
-					System.out.println("");
-					if(!g.isRedTurn())
-						ai_num = 1;
-				
-					if(!g.isGameOver()) {
-						for(int sim_move=0; sim_move<10; sim_move++) {
-							index = columnQuality(g, new moveFinder(g), false, new ArrayList<Integer>(), new ArrayList<Integer>());
-							g.play(index);
-							System.out.println("");
-							System.out.println("sim " + index);
-							System.out.println("");
-							moves_played.add(index);
-							
-							
-
-							if(sim_move==0)
-								opp_first_move = index;
-							
-							if(g.isGameOver()) {
-								if(g.isWinner()) {
-
-									if(g.isRedTurn() && ai_num==-1 || !g.isRedTurn() && ai_num==1) {
-										System.out.println("found good colummmmmmmmmmmmmmmmmmmmmmmmmmmm " + col);
-										good_columns.add(col);
-										good_first_moves.put(col, opp_first_move);
-									}
-									if(g.isRedTurn() && ai_num==1 || !g.isRedTurn() && ai_num==-1) {
-										bad_columns.add(col);
-									}
-								}
-								break;
-							}
-						}
-					}
-					
-					for(int num:moves_played) {
-						g.unplay(num);
-						
-					}
-					
-					moves_played.clear();
-					g.unplay(col);
-
-				}	
-			}
-
-			ArrayList<Integer> temp_good = new ArrayList<Integer>(good_columns);
-			ArrayList<Integer> test_bad_columns = new ArrayList<>();
-			
-			if(!temp_good.isEmpty()) {
-				for(int col_index: temp_good) {
-					
-					if(ya && !g.fullColumn(col_index)) {
-						g.play(col_index);
-						System.out.println("");
-						System.out.println("checking good column " + col_index);
-						System.out.println("");
-												
-						for(int col=0; col<g.getNumCols(); col++) {
-							if(!g.fullColumn(col)) {
-								
-								g.play(col);
-								System.out.println("");
-								System.out.println("good playing " + col);
-								System.out.println("");
-								
-								
-								if(g.isRedTurn())
-									ai_num = -1;
-								else
-									ai_num = 1;
-							
-								if(!g.isGameOver()) {
-									for(int sim_move=0; sim_move<10; sim_move++) {
-										index = columnQuality(g, new moveFinder(g), false, new ArrayList<Integer>(), new ArrayList<Integer>());
-										g.play(index);
-										System.out.println("");
-										System.out.println("sim " + index);
-										System.out.println("");
-										moves_played.add(index);
-										
-										if(g.isGameOver()) {
-											if(g.isWinner()) {
-												System.out.println(g.isRedTurn());
-												System.out.println(ai_num);
-												if(g.isRedTurn() && ai_num==1 || !g.isRedTurn() && ai_num==-1) {
-													System.out.println("found bad colummmmmmmmmmmmmmmmmmmmmmmmmmmm " + col);
-													test_bad_columns.add(col);
-												}
-											}
-											break;
-										}
-									}
-								}
-								
-								for(int num:moves_played) {
-									g.unplay(num);
-									
-								}
-								
-								moves_played.clear();
-								g.unplay(col);
-								
-							}
-						}
-						g.unplay(col_index);
-					}
-					
-					
-					System.out.println("test bad " + test_bad_columns);
-					System.out.println("good " + good_columns);
-					System.out.println("first_move " + good_first_moves.get(col_index));
-					if(test_bad_columns.contains(good_first_moves.get(col_index))) {
-						good_columns.remove((Object) col_index);
-						//throw new ArithmeticException();
-					}
-				}
-			}
-			
-			
-			
-			System.out.println("actually going");
-			return(columnQuality(g, new moveFinder(g), true, good_columns, bad_columns));
-		}
-	}
-	
+	/**
+     * This method creates instance of moveFinder inner class to gather logic based on differnt potential moves
+     * @params: ArrayLists from movefinder with column numbers as values
+     * @return: int: column to be played
+    */
 	public int max_element_array(int[] quality_arr, ArrayList<Integer> good_sim_columns, ArrayList<Integer> bad_sim_columns, ArrayList<Integer> illegal_moves,
 			ArrayList<Integer> losing_moves, ArrayList<Integer> unwise_moves, ArrayList<Integer> sacrifice_moves, ArrayList<Integer> bad_setup, 
 			ArrayList<Integer> loss_avoider, ArrayList<Integer> loss_creator, ArrayList<Integer> best_AI_unblockable, ArrayList<Integer> best_opp_unblockable, 
 			ArrayList<Integer> ok_AI_unblockable, ArrayList<Integer> ok_opp_unblockable, ArrayList<Integer> ai_blockable, ArrayList<Integer> opp_blockable, 
 			ArrayList<Integer> AI_winning_column, ArrayList<Integer> opp_winning_column, ArrayList<Integer> three_preventable, ArrayList<Integer> bad_position, int[][] four_potential_map) {
 		
+		// values assigned to columns from different arraylists. Negative means bad (the more negative the worse) and positive is good (the more positive the better)
 		int max = -1000000;
 		int max_element = 0;
 		int illegal = -10000;
@@ -1441,66 +1427,65 @@ public class JackMaloonAI implements CFPlayer{
 		
 		ArrayList<Integer> duplicate_max = new ArrayList<>();
 		
-		for(int index:good_sim_columns) {		//Adding value to a winning column
+		for(int index:good_sim_columns) {			//Adding positive value to a column in which AI going first beat itself
 			quality_arr[index] += good_column;
 		}
-		for(int index:bad_sim_columns) {		//Adding value to a winning column
+		for(int index:bad_sim_columns) {			//Adding negative value to a column in which AI going first lost to itself
 			quality_arr[index] += unwise;
 		}
-		for(int index:unwise_moves) {		//Setting values in arr to negative value if move is unwise. Still greater than losing since this move is better
+		for(int index:unwise_moves) {				//Adding negative value to a move that allows opponent to block aAI winning move
 			quality_arr[index] += unwise;
 		}
-		for(int index:sacrifice_moves) {		
+		for(int index:sacrifice_moves) {			//Adding positive value to a column that allows opponent to block AI's winning move to create better winning move
 			quality_arr[index] += sacrifice;
 		}
-		for(int index:bad_setup) {		
+		for(int index:bad_setup) {					//Adding negative value to a column that creates a good board setup for opponent
 			quality_arr[index] += poor_setup;
 		}
-		for(int index:loss_avoider) {		//If a row can be "stopped", a lot of value is added to that column that "stops" it
+		for(int index:loss_avoider) {				//Adding positive value to a column move that avoids loss for AI
 			quality_arr[index] += loss_finder;
 		}
-		for(int index:loss_creator) {		//If a row can be "stopped", a lot of value is added to that column that "stops" it
+		for(int index:loss_creator) {				//Adding negative value to a column that allows opponent to make create a board that they can immediately win on
 			quality_arr[index] += loss_maker;
 		}
-		for(int index:best_AI_unblockable) {		//Adding value to making three in a row
+		for(int index:best_AI_unblockable) {		//Adding positive value to making three in a row that can't be blocked with potential winning move on good row
 			quality_arr[index] += ai_three_best;
 		}
-		for(int index:best_opp_unblockable) {		//Adding value to blocking three in a row
+		for(int index:best_opp_unblockable) {		//Adding positive value to blocking opponent three in a row that can't be blocked with potential winning move on good row
 			quality_arr[index] += opp_three_best;
 		}
-		for(int index:ok_AI_unblockable) {		//Adding value to making three in a row
+		for(int index:ok_AI_unblockable) {			//Adding positive value to making three in a row that can't be blocked with potential winning move on bad row
 			quality_arr[index] += ai_three_ok;
 		}
-		for(int index:ok_opp_unblockable) {		//Adding value to blocking three in a row
+		for(int index:ok_opp_unblockable) {			//Adding positive value to blocking opponent three in a row that can't be blocked with potential winning move on bad row
 			quality_arr[index] += opp_three_ok;
 		}
-		for(int index:ai_blockable) {		//Adding value to making three in a row
+		for(int index:ai_blockable) {				//Adding positive value to making three in a row that can be blocked
 			quality_arr[index] += three_grouped_blockable;
 		}
-		for(int index:opp_blockable) {		//Adding value to blocking three in a row
+		for(int index:opp_blockable) {				//Adding positive value to blocking opponent three in a row that can be blocked
 			quality_arr[index] += opponent_three_blockable;
 		}
-		for(int index:three_preventable) {		//Adding value to blocking three in a row
+		for(int index:three_preventable) {			//Adding negative value to a column that allows opponent to make three in a row
 			quality_arr[index] += block_opponent_three;
 		}
-		for(int index:bad_position) {		//Adding value to blocking three in a row
+		for(int index:bad_position) {				//Adding negative value to move that sets up opponent in good position
 			quality_arr[index] += bad_place;
 		}
-		for(int index:AI_winning_column) {		//Adding value to a winning column
+		for(int index:AI_winning_column) {			//Adding value to a column that creates two winning moves on top of one another
 			quality_arr[index] += great_column;
 		}
-		for(int index:opp_winning_column) {		//Adding value to a winning column
+		for(int index:opp_winning_column) {			//Adding value to a column that blocks opponent from two winning moves on top of one another
 			quality_arr[index] += great_column;
 		}
-		for(int index:losing_moves) {		//Setting values in arr to negative value if move is losing
+		for(int index:losing_moves) {				//Setting values of columns that allow opponent to win to large negative number
 			quality_arr[index] = losing;
 		}
-		for(int index:illegal_moves) {		//Setting values in arr to arbitrary negative value if move is illegal
+		for(int index:illegal_moves) {				//Setting values of columns that canoot be played to very large negative value if move is illegal
 			quality_arr[index] = illegal;
 		}
 
-		for(int i=0; i<quality_arr.length; i++) { 
-			System.out.print(quality_arr[i] + " ");
+		for(int i=0; i<quality_arr.length; i++) {    //iterates through array with values assigned to each column, find biggest value (best column)
 			if(quality_arr[i] > max) {
 				max = quality_arr[i];
 				max_element = i;
@@ -1514,8 +1499,6 @@ public class JackMaloonAI implements CFPlayer{
 					duplicate_max.add(max_element);
 			}
 		}
-		System.out.println("");
-		//System.out.println("");
 		
 		if(duplicate_max.size()>0) {
 			Random rand = new Random();
@@ -1526,8 +1509,13 @@ public class JackMaloonAI implements CFPlayer{
 		return max_element;
 	}
 	
+	/**
+     * This method returns name of this AI.
+     * @param none
+     * @return String: name of AI
+    */
 	public String getName() {
-		if(ya)
+		if(sim_mode)
 			return "Jack Maloon better AI";
 		else
 			return "Worse AI";
@@ -1535,7 +1523,6 @@ public class JackMaloonAI implements CFPlayer{
 }
 
 /*
-
 System.out.println("fourmap");
 for(int ii=5; ii>=0; ii--) {
 	for(int jj = 0;jj<g.getNumCols();jj++) {
@@ -1547,5 +1534,4 @@ for(int ii=5; ii>=0; ii--) {
 	System.out.println("");
 }
 System.out.println("");	
-
 */
