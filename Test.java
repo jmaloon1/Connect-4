@@ -23,8 +23,8 @@ public class Test {
 
 
     	if (gameMode==1) {			//starts a GUI game with human playing ai, can also be changed to make it an ai vs. ai game
-    		//new GUICF(new JackMaloonAI());
-    		//new GUICF();
+    		new GUICF(new JackMaloonAI());
+    		new GUICF();
     	} 
     	else if (gameMode==2) {		//starts a console game with ai vs. ai, checks to see is personal ai wins and returns win probability with monte carlo simulation
   
